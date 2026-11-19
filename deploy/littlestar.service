@@ -1,0 +1,16 @@
+# /etc/systemd/system/littlestar.service
+[Unit]
+Description=Little Star platformasi
+After=network.target
+
+[Service]
+User=littlestar
+WorkingDirectory=/opt/littlestar
+Environment=PORT=3000
+Environment=DB_PATH=/opt/littlestar/data/littlestar.db
+ExecStart=/usr/bin/node --no-warnings server/server.js
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

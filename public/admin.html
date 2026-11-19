@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin panel — Little Star</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" href="/icons/favicon-48.png">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--pink:#ff5c8a;--blue:#3d8bff;--green:#1fbf75;--orange:#ff9f1c;--purple:#8e5cff;--ink:#23204a;--bg:#f4f2ff}
+*{box-sizing:border-box}body{margin:0;font-family:Nunito,"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+button{font-family:inherit;cursor:pointer;border:none}
+header{background:linear-gradient(135deg,#1b1450,#4b2fb0);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header b{font-size:22px;font-weight:900}header small{opacity:.8;font-weight:800}
+header .sp{flex:1}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}.tabs button{background:rgba(255,255,255,.12);color:#fff;font-weight:900;font-size:15px;padding:9px 14px;border-radius:12px}
+.tabs button.on{background:#fff;color:var(--ink)}
+main{max-width:1200px;margin:0 auto;padding:18px}
+.card{background:#fff;border-radius:20px;padding:18px;margin-bottom:16px;box-shadow:0 4px 0 rgba(0,0,0,.06)}
+h2{margin:0 0 10px;font-size:24px;font-weight:900}h3{margin:0 0 8px;font-weight:900}
+.muted{color:#7a74a8;font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.stat{border-radius:18px;padding:14px;color:#fff}.stat b{display:block;font-size:30px;font-weight:900}.stat span{font-weight:800;font-size:14px}
+.btn{border-radius:12px;padding:9px 16px;font-weight:900;font-size:15px;background:var(--purple);color:#fff}
+.btn.g{background:var(--green)}.btn.r{background:var(--pink)}.btn.w{background:#ece8ff;color:var(--ink)}.btn.o{background:var(--orange)}
+.btn.sm{padding:6px 10px;font-size:13px}
+.btn:disabled{opacity:.5}
+input,select,textarea{font:inherit;font-weight:700;font-size:16px;padding:9px 12px;border-radius:12px;border:2px solid #e2ddff;background:#fff;color:var(--ink);width:100%}
+textarea{min-height:70px;resize:vertical}
+label.f{display:block;margin:8px 0}label.f span{display:block;font-size:13px;font-weight:900;color:#7a74a8;margin-bottom:4px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}.row>*{flex:1;min-width:140px}
+.switch{display:flex;align-items:center;gap:14px;background:#f7f5ff;border-radius:16px;padding:14px;cursor:pointer}
+.switch .k{width:64px;height:36px;border-radius:999px;background:#ccc;position:relative;flex:none;transition:.2s}
+.switch .k:after{content:"";position:absolute;top:4px;left:4px;width:28px;height:28px;border-radius:50%;background:#fff;transition:.2s}
+.switch.on .k{background:var(--green)}.switch.on .k:after{left:32px}
+.switch b{font-size:18px}
+table{width:100%;border-collapse:collapse}td,th{padding:9px 8px;border-bottom:1px solid #eee;text-align:left;font-weight:700;font-size:15px;vertical-align:top}
+th{font-size:12px;color:#7a74a8;text-transform:uppercase}
+.tag{display:inline-block;border-radius:999px;padding:2px 9px;font-weight:900;font-size:12px;background:#ece8ff;color:#5b33c9}.tag.g{background:#d8f7e7;color:#0f7a49}.tag.r{background:#ffe0ea;color:#c2185b}
+.q{border:2px solid #ece8ff;border-radius:16px;padding:12px;margin:10px 0}
+.q .hd{display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap}
+.q .hd b{font-size:18px}
+.opt{display:flex;gap:8px;align-items:center;margin:5px 0}.opt input[type=radio]{width:22px;height:22px;flex:none}
+.opt .L{font-weight:900;width:22px}
+.err{background:#ffe0ea;color:#c2185b;border-radius:12px;padding:10px 14px;font-weight:800;margin:10px 0}
+.ok{background:#d8f7e7;color:#0f7a49;border-radius:12px;padding:10px 14px;font-weight:800;margin:10px 0}
+.modal{position:fixed;inset:0;background:rgba(27,20,80,.6);display:flex;align-items:center;justify-content:center;z-index:9;padding:16px}
+.modal .card{max-width:640px;width:100%;max-height:90vh;overflow:auto}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:14px;font-weight:900;z-index:10}
+.qimg{max-width:240px;max-height:160px;border-radius:10px;display:block;margin:6px 0}
+</style>
+</head>
+<body>
+<header><div><b>⭐ Little Star — Admin</b><br><small>Navoiy-Qorako‘l o‘quv markazi</small></div><div class="sp"></div><div class="tabs" id="tabs"></div></header>
+<main id="m"></main>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),M=$('#m');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let token=null;try{token=JSON.parse(localStorage.getItem('ls_token'))}catch(e){}
+let STATS=null;
+async function api(method,path,body){let r;try{r=await fetch('/api'+path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined})}catch(e){throw new Error('Server bilan aloqa yo‘q')}
+  let j={};try{j=await r.json()}catch(e){}if(!r.ok){const e=new Error(j.error||r.status);e.status=r.status;throw e}return j}
+function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2200)}
+function modal(html){const m=document.createElement('div');m.className='modal';m.innerHTML=`<div class="card">${html}</div>`;document.body.appendChild(m);return m}
+const SECN={pm1:'PM — 1-bosqich',pm2:'PM — 2-bosqich',ixt:'Ixtisoslashtirilgan maktablar',ol3:'Olimpiada — 3-sinf',ol4:'Olimpiada — 4-sinf'};
+const dt=t=>t?new Date(t*1000).toLocaleDateString('uz'):'—';
+
+/* ---------- kirish ---------- */
+function login(msg){$('#tabs').innerHTML='';
+  M.innerHTML=`<div class="card" style="max-width:420px;margin:40px auto"><h2>🔐 Admin kirishi</h2>${msg?`<div class="err">${esc(msg)}</div>`:''}
+  <form id="lf"><label class="f"><span>Telefon (998...)</span><input id="ph" inputmode="numeric"></label><label class="f"><span>Parol</span><input id="pw" type="password"></label><div id="le"></div><button class="btn" style="width:100%;padding:12px">Kirish</button></form></div>`;
+  $('#lf').onsubmit=async e=>{e.preventDefault();try{const j=await api('POST','/auth/login',{phone:$('#ph').value,password:$('#pw').value});if(j.account.role!=='admin')throw new Error('Bu akkaunt admin emas');token=j.token;localStorage.setItem('ls_token',JSON.stringify(token));start()}catch(err){$('#le').innerHTML=`<div class="err">${esc(err.message)}</div>`}}}
+async function start(){if(!token)return login();
+  try{const me=await api('GET','/me');if(me.account.role!=='admin')return login('Bu akkaunt admin emas')}catch(e){return login(e.status===401?'':e.message)}
+  const T=[['dash','📊 Boshqaruv'],['tests','📝 Testlar'],['users','👥 Foydalanuvchilar'],['site','🌐 Saytga o‘tish']];
+  $('#tabs').innerHTML=T.map(([k,t])=>`<button data-t="${k}">${t}</button>`).join('');
+  $('#tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>tab(b.dataset.t));tab('dash')}
+function tab(k){if(k==='site'){location.href='/';return}$('#tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.t===k));({dash,tests,users})[k]()}
+
+/* ---------- boshqaruv ---------- */
+async function dash(){M.innerHTML='<p class="muted">Yuklanmoqda...</p>';const s=STATS=await api('GET','/admin/stats');const set=s.settings;
+  const C=[['Akkauntlar',s.accounts,'var(--purple)'],['O‘quvchilar',s.children,'var(--blue)'],['Bugun yangi',s.new_today,'var(--green)'],['Yechilgan testlar',s.attempts,'var(--orange)'],['Bugun yechilgan',s.attempts_today,'var(--pink)'],['Obunachilar',s.premium,'#00b894'],['Testlar',s.tests,'#7c4dff'],['Savollar',s.questions,'#0091d5']];
+  M.innerHTML=`<div class="card"><h2>📊 Statistika</h2><div class="stats">${C.map(([t,v,c])=>`<div class="stat" style="background:${c}"><b>${v}</b><span>${t}</span></div>`).join('')}</div></div>
+  <div class="card"><h2>💳 Kirish rejimi</h2>
+   <div class="switch ${set.free_mode?'on':''}" id="fm"><div class="k"></div><div><b>Hamma uchun bepul</b><div class="muted">Yoqilgan bo‘lsa, barcha bo‘limlar hammaga ochiq. O‘chirilsa, quyida belgilangan bo‘limlar faqat obunachilarga ochiladi.</div></div></div>
+   <h3 style="margin-top:16px">Pullik bo‘limlar</h3>${Object.entries(SECN).map(([k,n])=>`<label style="display:flex;gap:10px;align-items:center;font-weight:800;margin:6px 0"><input type="checkbox" style="width:22px;height:22px" data-p="${k}" ${set.premium_sections.includes(k)?'checked':''}> ${n}</label>`).join('')}
+   <label class="f"><span>Pullik bo‘limda ko‘rsatiladigan matn (narx, aloqa)</span><textarea id="ct">${esc(set.contact_text)}</textarea></label>
+   <button class="btn g" id="sv">💾 Saqlash</button><p class="muted">O‘yinlar bo‘limi doim bepul. To‘lov tizimi (Click/Payme) ulanmaguncha obunani “Foydalanuvchilar” bo‘limida qo‘lda berasiz.</p></div>
+  <div class="card"><h2>🗺️ Viloyatlar bo‘yicha o‘quvchilar</h2><table>${s.by_region.map(r=>`<tr><td>${esc(r.region)}</td><td><b>${r.n}</b></td></tr>`).join('')||'<tr><td class="muted">Hali yo‘q</td></tr>'}</table></div>`;
+  let free=set.free_mode;$('#fm').onclick=()=>{free=!free;$('#fm').classList.toggle('on',free)};
+  $('#sv').onclick=async()=>{await api('PUT','/admin/settings',{free_mode:free,premium_sections:[...M.querySelectorAll('[data-p]:checked')].map(x=>x.dataset.p),contact_text:$('#ct').value});toast('Saqlandi ✅')}}
+
+/* ---------- testlar ---------- */
+let secF='';
+async function tests(){M.innerHTML='<p class="muted">Yuklanmoqda...</p>';const list=await api('GET','/admin/tests?section='+secF);
+  M.innerHTML=`<div class="card"><div class="row"><div><h2 style="margin:0">📝 Testlar</h2></div><select id="sf"><option value="">Barcha bo‘limlar</option>${Object.entries(SECN).map(([k,n])=>`<option value="${k}" ${secF===k?'selected':''}>${n}</option>`).join('')}</select><button class="btn g" id="nw" style="flex:none">➕ Yangi test</button></div></div>
+  <div class="card"><table><tr><th>Bo‘lim</th><th>Nomi</th><th>Savollar</th><th>Vaqt</th><th>Yechilgan</th><th>Holat</th><th></th></tr>${list.map(t=>`<tr><td>${SECN[t.section]}</td><td><b>${esc(t.title)}</b></td><td>${t.count}</td><td>${t.duration_min} daq</td><td>${t.attempts}</td><td>${t.published?'<span class="tag g">Ochiq</span>':'<span class="tag r">Yashirin</span>'}</td><td><button class="btn sm" data-e="${t.id}">✏️ Tahrirlash</button></td></tr>`).join('')}</table></div>`;
+  $('#sf').onchange=e=>{secF=e.target.value;tests()};$('#nw').onclick=()=>editTest(null);
+  M.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>editTest(+b.dataset.e))}
+
+async function editTest(id){
+  const t=id?await api('GET','/admin/tests/'+id):{section:secF||'pm1',title:'',grade:4,duration_min:60,published:0,sort:0,questions:[]};
+  const qs=t.questions.map(q=>({subject:q.subject,text:q.text,image:q.image||'',options:q.options.slice(),correct:q.correct,explanation:q.explanation||''}));
+  const L='ABCDEFGH';
+  const draw=()=>{M.innerHTML=`<div class="card"><div class="row"><button class="btn w" id="bk" style="flex:none">← Orqaga</button><h2 style="margin:0">${id?'Testni tahrirlash':'Yangi test'}</h2></div>
+   <div class="row" style="margin-top:10px"><label class="f"><span>Bo‘lim</span><select id="ts">${Object.entries(SECN).map(([k,n])=>`<option value="${k}" ${t.section===k?'selected':''}>${n}</option>`).join('')}</select></label>
+   <label class="f"><span>Nomi</span><input id="tt" value="${esc(t.title)}" placeholder="Masalan: 4-variant"></label>
+   <label class="f"><span>Vaqt (daqiqa)</span><input id="td" type="number" value="${t.duration_min}"></label>
+   <label class="f"><span>Tartib raqami</span><input id="to" type="number" value="${t.sort||0}"></label>
+   <label class="f" style="flex:none"><span>Holat</span><select id="tp"><option value="1" ${t.published?'selected':''}>Ochiq</option><option value="0" ${t.published?'':'selected'}>Yashirin</option></select></label></div>
+   <div class="row"><button class="btn g" id="save">💾 Saqlash (${qs.length} ta savol)</button><button class="btn o" id="imp">📥 Matndan import</button><button class="btn" id="addq">➕ Savol qo‘shish</button>${id?'<button class="btn r" id="del" style="flex:none">🗑️ Testni o‘chirish</button>':''}</div><div id="msg"></div></div>
+   <div id="ql">${qs.map((q,i)=>`<div class="q card" data-i="${i}"><div class="hd"><b>${i+1}.</b><input class="qs" value="${esc(q.subject)}" style="max-width:200px" placeholder="Fan"><span style="flex:1"></span><button class="btn w sm" data-up="${i}">↑</button><button class="btn w sm" data-dn="${i}">↓</button><button class="btn r sm" data-rm="${i}">✕</button></div>
+     <textarea class="qt" placeholder="Savol matni">${esc(q.text)}</textarea>
+     ${q.image?`<img class="qimg" src="${esc(q.image)}"><button class="btn w sm" data-ri="${i}">Rasmni olib tashlash</button>`:`<label class="muted" style="display:block;margin:6px 0">🖼️ Rasm qo‘shish: <input type="file" accept="image/*" data-img="${i}" style="width:auto;border:none;padding:0"></label>`}
+     ${q.options.map((o,k)=>`<div class="opt"><input type="radio" name="c${i}" value="${k}" ${q.correct===k?'checked':''} title="To‘g‘ri javob"><span class="L">${L[k]}</span><input class="qo" data-k="${k}" value="${esc(o)}">${q.options.length>2?`<button class="btn w sm" data-ro="${i}:${k}">✕</button>`:''}</div>`).join('')}
+     ${q.options.length<6?`<button class="btn w sm" data-ao="${i}">+ variant</button>`:''}
+     <label class="f"><span>Yechim / izoh (natijada ko‘rsatiladi)</span><textarea class="qe" style="min-height:44px">${esc(q.explanation)}</textarea></label></div>`).join('')}</div>`;
+    $('#bk').onclick=tests;$('#addq').onclick=()=>{collect();qs.push({subject:qs.length?qs[qs.length-1].subject:'Matematika',text:'',image:'',options:['','','',''],correct:0,explanation:''});draw();window.scrollTo(0,document.body.scrollHeight)};
+    $('#imp').onclick=importDlg;$('#save').onclick=save;if($('#del'))$('#del').onclick=del;
+    const act=(sel,fn)=>M.querySelectorAll(sel).forEach(b=>b.onclick=()=>{collect();fn(b);draw()});
+    act('[data-up]',b=>{const i=+b.dataset.up;if(i>0)[qs[i-1],qs[i]]=[qs[i],qs[i-1]]});
+    act('[data-dn]',b=>{const i=+b.dataset.dn;if(i<qs.length-1)[qs[i+1],qs[i]]=[qs[i],qs[i+1]]});
+    act('[data-rm]',b=>{qs.splice(+b.dataset.rm,1)});act('[data-ri]',b=>{qs[+b.dataset.ri].image=''});
+    act('[data-ao]',b=>{qs[+b.dataset.ao].options.push('')});
+    act('[data-ro]',b=>{const [i,k]=b.dataset.ro.split(':').map(Number);const q=qs[i];q.options.splice(k,1);if(q.correct>=q.options.length)q.correct=0;else if(q.correct>k)q.correct--});
+    M.querySelectorAll('[data-img]').forEach(inp=>inp.onchange=()=>{const f=inp.files[0];if(!f)return;if(f.size>450000){toast('Rasm 450 KB dan kichik bo‘lsin');return}const r=new FileReader();r.onload=()=>{collect();qs[+inp.dataset.img].image=r.result;draw()};r.readAsDataURL(f)});
+  };
+  const collect=()=>{t.section=$('#ts').value;t.title=$('#tt').value;t.duration_min=+$('#td').value;t.sort=+$('#to').value;t.published=+$('#tp').value;
+    M.querySelectorAll('.q').forEach(el=>{const q=qs[+el.dataset.i];q.subject=el.querySelector('.qs').value;q.text=el.querySelector('.qt').value;q.explanation=el.querySelector('.qe').value;
+      el.querySelectorAll('.qo').forEach(o=>q.options[+o.dataset.k]=o.value);const c=el.querySelector('input[type=radio]:checked');q.correct=c?+c.value:-1})};
+  async function save(){collect();$('#msg').innerHTML='';try{
+      const meta={section:t.section,title:t.title,grade:t.section==='ol3'?3:4,duration_min:t.duration_min,published:!!t.published,sort:t.sort};
+      if(!id){const j=await api('POST','/admin/tests',meta);id=j.id}else await api('PUT','/admin/tests/'+id,meta);
+      await api('PUT',`/admin/tests/${id}/questions`,{questions:qs});toast('Saqlandi ✅');draw()}catch(e){$('#msg').innerHTML=`<div class="err">${esc(e.message)}</div>`}}
+  async function del(){const m=modal(`<h3>Test o‘chirilsinmi?</h3><p class="muted">Savollar va shu test bo‘yicha barcha natijalar ham o‘chadi.</p><div class="row"><button class="btn w" id="n">Yo‘q</button><button class="btn r" id="y">O‘chirish</button></div>`);
+    m.querySelector('#n').onclick=()=>m.remove();m.querySelector('#y').onclick=async()=>{await api('DELETE','/admin/tests/'+id);m.remove();tests()}}
+  function importDlg(){collect();const m=modal(`<h3>📥 Matndan import</h3><p class="muted">Savollarni quyidagi ko‘rinishda joylang (Word’dan nusxa olish mumkin):</p>
+    <pre style="background:#f7f5ff;border-radius:12px;padding:10px;font-size:14px;white-space:pre-wrap">[Matematika]
+1. 25 + 17 = ?
+A) 42
+B) 32
+C) 43
+D) 41
+Javob: A
+Izoh: 25 + 17 = 42
+
+[Ingliz tili]
+2. I ___ a student.
+A) am  B) is  C) are  D) be
+Javob: A</pre>
+    <textarea id="it" style="min-height:200px" placeholder="Savollarni shu yerga joylang"></textarea>
+    <label style="display:flex;gap:8px;align-items:center;font-weight:800;margin:8px 0"><input type="checkbox" id="ir" style="width:20px;height:20px"> Mavjud savollarni almashtirish (aks holda oxiriga qo‘shiladi)</label><div id="ie"></div>
+    <div class="row"><button class="btn w" id="n">Bekor</button><button class="btn g" id="y">Import</button></div>`);
+    m.querySelector('#n').onclick=()=>m.remove();
+    m.querySelector('#y').onclick=()=>{const res=parseImport(m.querySelector('#it').value);if(res.error){m.querySelector('#ie').innerHTML=`<div class="err">${esc(res.error)}</div>`;return}
+      if(m.querySelector('#ir').checked)qs.length=0;qs.push(...res.list);m.remove();draw();toast(res.list.length+' ta savol qo‘shildi. Saqlashni unutmang!')}}
+  draw();
+}
+function parseImport(txt){
+  const list=[];let cur=null,subject='Matematika',mode='text';
+  const push=()=>{if(cur)list.push(cur);cur=null};
+  const lines=txt.replace(/\r/g,'').split('\n');
+  for(let raw of lines){const line=raw.trim();if(!line)continue;
+    let m;
+    if((m=line.match(/^\[(.+)\]$/))){push();subject=m[1].trim();continue}
+    if((m=line.match(/^(\d+)\s*[.)]\s+(.*)$/))){push();cur={subject,text:m[2],image:'',options:[],correct:-1,explanation:''};mode='text';continue}
+    if(!cur)continue;
+    if((m=line.match(/^(javob|answer|to‘g‘ri javob|to'g'ri javob)\s*[:\-]\s*([A-Ha-h])/i))){cur.correct='ABCDEFGH'.indexOf(m[2].toUpperCase());mode='after';continue}
+    if((m=line.match(/^(izoh|yechim|explanation)\s*[:\-]\s*(.*)$/i))){cur.explanation=m[2];mode='expl';continue}
+    if(/^[A-Ha-h]\s*[).]/.test(line)){const parts=line.split(/\s*(?=\b[A-Ha-h]\s*\))/).filter(Boolean);
+      for(const p of parts){const mm=p.match(/^([A-Ha-h])\s*[).]\s*(.*)$/);if(mm)cur.options.push(mm[2].trim());}mode='opts';continue}
+    if(mode==='expl')cur.explanation+='\n'+line;else if(mode==='text')cur.text+='\n'+line;else if(mode==='opts'&&cur.options.length)cur.options[cur.options.length-1]+=' '+line;
+  }
+  push();
+  if(!list.length)return{error:'Savol topilmadi. Har bir savol raqam bilan boshlansin: “1. ...”'};
+  for(let i=0;i<list.length;i++){const q=list[i];if(q.options.length<2)return{error:`${i+1}-savolda variantlar topilmadi (A) B) ...)`};if(q.correct<0||q.correct>=q.options.length)return{error:`${i+1}-savolda “Javob: A” qatori yo‘q yoki noto‘g‘ri`}}
+  return{list};
+}
+
+/* ---------- foydalanuvchilar ---------- */
+let uq='';
+async function users(){M.innerHTML='<p class="muted">Yuklanmoqda...</p>';const list=await api('GET','/admin/users?q='+encodeURIComponent(uq));const nowS=Date.now()/1000;
+  M.innerHTML=`<div class="card"><div class="row"><h2 style="margin:0">👥 Foydalanuvchilar</h2><input id="uq" placeholder="Telefon, ota-ona yoki bola ismi bo‘yicha qidirish" value="${esc(uq)}"><button class="btn" id="us" style="flex:none">🔍 Qidirish</button></div></div>
+  <div class="card" style="overflow:auto"><table><tr><th>Telefon</th><th>Farzandlari</th><th>Testlar</th><th>Obuna</th><th>Amallar</th></tr>${list.map(u=>`<tr><td><b>+${esc(u.phone)}</b>${u.role==='admin'?' <span class="tag">admin</span>':''}<br><span class="muted">${esc(u.parent_name)} · ${dt(u.created_at)}</span></td><td>${esc(u.kids||'—')}</td><td>${u.attempts}</td>
+    <td>${u.premium_until>nowS?`<span class="tag g">${dt(u.premium_until)} gacha</span>`:'<span class="tag r">Yo‘q</span>'}</td>
+    <td><button class="btn g sm" data-p="${u.id}:30">+30 kun</button> <button class="btn g sm" data-p="${u.id}:365">+1 yil</button> <button class="btn w sm" data-p="${u.id}:0">Bekor</button><br><button class="btn w sm" data-pw="${u.id}" style="margin-top:4px">🔑 Parol</button> <button class="btn w sm" data-r="${u.id}:${u.role==='admin'?'user':'admin'}" style="margin-top:4px">${u.role==='admin'?'Adminlikdan olish':'Admin qilish'}</button></td></tr>`).join('')}</table>${list.length?'':'<p class="muted">Topilmadi</p>'}</div>`;
+  $('#us').onclick=()=>{uq=$('#uq').value;users()};$('#uq').onkeydown=e=>{if(e.key==='Enter'){uq=$('#uq').value;users()}};
+  M.querySelectorAll('[data-p]').forEach(b=>b.onclick=async()=>{const [id,d]=b.dataset.p.split(':').map(Number);await api('PUT','/admin/users/'+id,{premium_days:d});toast(d?'Obuna berildi ✅':'Obuna bekor qilindi');users()});
+  M.querySelectorAll('[data-r]').forEach(b=>b.onclick=async()=>{const [id,r]=b.dataset.r.split(':');try{await api('PUT','/admin/users/'+id,{role:r});users()}catch(e){toast(e.message)}});
+  M.querySelectorAll('[data-pw]').forEach(b=>b.onclick=()=>{const m=modal(`<h3>🔑 Yangi parol</h3><input id="np" placeholder="Kamida 6 belgi"><div id="pe"></div><div class="row" style="margin-top:10px"><button class="btn w" id="n">Bekor</button><button class="btn g" id="y">Saqlash</button></div>`);
+    m.querySelector('#n').onclick=()=>m.remove();m.querySelector('#y').onclick=async()=>{try{await api('PUT','/admin/users/'+b.dataset.pw,{new_password:m.querySelector('#np').value});m.remove();toast('Parol yangilandi ✅')}catch(e){m.querySelector('#pe').innerHTML=`<div class="err">${esc(e.message)}</div>`}}})}
+start();
+</script>
+</body>
+</html>
