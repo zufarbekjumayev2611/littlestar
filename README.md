@@ -1,1 +1,81 @@
-# littlestar
+# Little Star — o‘rnatish bo‘yicha qo‘llanma (dasturchi uchun)
+
+Navoiy-Qorako‘l o‘quv markazining 6–10 yoshli bolalar uchun ta’limiy platformasi. Domen: **littlestar.uz**.
+
+## Tarkibi
+
+| Qism | Tavsif |
+|---|---|
+| `public/index.html` | Asosiy ilova (PWA). Unda 4 bo‘lim bor: **O‘yinlar** (bepul, server talab qilmaydi), **Testlar**, **Reyting** va **Kabinet** |
+| `public/admin.html` | Admin panel (`/admin`): statistika, bepul/pullik rejim, testlar va savollar muharriri, matndan import, obuna berish |
+| `server/server.js` | Backend: Node.js va o‘rnatilgan SQLite (`node:sqlite`). **Tashqi kutubxona yo‘q, `npm install` shart emas** |
+| `server/seed.js` | Birinchi ishga tushishda har bo‘lim uchun 3 tadan namunaviy variant yaratadi. Savollar dastur bilan hisoblangan |
+| `deploy/` | systemd xizmati, Nginx konfiguratsiyasi va zaxira nusxa skripti |
+
+Test bo‘limlari:
+- **PM 1-bosqich:** matematika, 30 ta savol (10 yengil, 10 o‘rta, 10 murakkab).
+- **PM 2-bosqich:** matematika 40 ta + ingliz tili 40 ta.
+- **Ixtisoslashtirilgan maktab (5-sinfga):** matematika 30 ta (shundan 10 tasi mantiqiy fikrlash) + ingliz tili 15 ta, 105 daqiqa.
+- **Olimpiada:** 3-sinf va 4-sinf uchun alohida.
+
+Har bir testning vaqtini admin paneldan o‘zgartirish mumkin.
+
+## Talablar
+- Ubuntu 22.04/24.04 VPS (1 GB RAM yetarli).
+- **Node.js 22.13 yoki undan yangi** (24 LTS tavsiya qilinadi).
+- Nginx va certbot (HTTPS uchun). PWA va telefon ilovasi faqat **HTTPS** bilan ishlaydi.
+
+> Diqqat: endi bu oddiy statik sayt emas. Netlify/GitHub Pages yetmaydi, chunki serverli hosting (VPS) kerak.
+
+## O‘rnatish
+```bash
+# 1) Node.js 24
+curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash - && sudo apt install -y nodejs nginx sqlite3
+# 2) Fayllar
+sudo useradd -r -s /usr/sbin/nologin littlestar
+sudo mkdir -p /opt/littlestar && sudo cp -r . /opt/littlestar && sudo chown -R littlestar /opt/littlestar
+# 3) Birinchi admin (telefon raqami 998 bilan, parol kamida 6 belgi)
+cd /opt/littlestar && sudo -u littlestar node --no-warnings server/server.js --create-admin 998XXXXXXXXX KuchliParol
+# 4) Xizmat
+sudo cp deploy/littlestar.service /etc/systemd/system/ && sudo systemctl enable --now littlestar
+# 5) Nginx + HTTPS
+sudo cp deploy/nginx-littlestar.conf /etc/nginx/sites-available/littlestar
+sudo ln -s /etc/nginx/sites-available/littlestar /etc/nginx/sites-enabled/ && sudo nginx -t && sudo systemctl reload nginx
+sudo certbot --nginx -d littlestar.uz -d www.littlestar.uz
+# 6) Kunlik zaxira nusxa
+sudo crontab -e   # 15 3 * * * /opt/littlestar/deploy/backup.sh
+```
+DNS: `littlestar.uz` va `www` uchun A-yozuvni VPS IP manziliga yo‘naltiring.
+
+Lokal sinash: `npm start` buyrug‘idan keyin http://localhost:3000 va http://localhost:3000/admin manzillarini oching.
+
+## Sozlamalar (environment)
+| O‘zgaruvchi | Standart qiymat |
+|---|---|
+| `PORT` | 3000 |
+| `DB_PATH` | `data/littlestar.db` |
+
+Barcha ma’lumotlar bitta SQLite faylida saqlanadi. Zaxira nusxasini muntazam olish kerak.
+
+## Yangilash
+`public/` va `server/` fayllarini almashtirib, `sudo systemctl restart littlestar` buyrug‘ini bering. `data/` papkasiga **tegmang**.
+
+Telefonlardagi ilova yangi versiyani darhol olishi uchun `public/sw.js` faylidagi `VERSION` qiymatini oshiring.
+
+## Asosiy qoidalar (biznes mantiq)
+- **Kirish:** ota-onaning telefon raqami va paroli bilan. Bitta akkauntga 5 tagacha bola profili qo‘shiladi. Reyting bola nomidan yuritiladi.
+- **Reyting:** har bir testning **birinchi yakunlangan urinishi** hisoblanadi, qayta urinishlar faqat mashq uchun. Ball bo‘limdagi testlarning to‘g‘ri javoblari yig‘indisiga teng. Ballar teng bo‘lsa, tezroq yechgan yuqorida turadi. Reytingni respublika, viloyat va sinf bo‘yicha ko‘rish mumkin.
+- **Pullik rejim:** admin paneldagi “Hamma uchun bepul” tugmasi. U o‘chirilganda, belgilangan bo‘limlar faqat `premium_until` muddati tugamagan akkauntlarga ochiladi. O‘yinlar bo‘limi doim bepul.
+- To‘g‘ri javoblar brauzerga test yakunlangandan keyingina yuboriladi. Ball server tomonida hisoblanadi.
+
+## Keyingi bosqichlar (dasturchi uchun vazifalar)
+1. **To‘lov (Click / Payme):** muvaffaqiyatli to‘lovdan keyin `accounts.premium_until` maydonini uzaytirish kifoya. Bunda `PUT /api/admin/users/:id {premium_days}` mantig‘idan foydalaning.
+2. **SMS orqali tasdiqlash** (masalan, Eskiz.uz): ro‘yxatdan o‘tish va parolni tiklash uchun.
+3. **Ko‘p foydalanuvchi bo‘lganda:** reyting so‘rovlarini keshlash yoki PostgreSQL’ga o‘tish. Hozirgi SQLite o‘n minglab foydalanuvchiga yetadi.
+4. **Play Market:** sayt HTTPS’da ishlagach, PWABuilder orqali TWA paket yasaladi. Buning uchun `/.well-known/assetlinks.json` fayli kerak bo‘ladi.
+
+## API qisqacha
+`POST /api/auth/register|login|logout` · `GET /api/meta` · `GET /api/me` · `POST|PUT|DELETE /api/children[/:id]` ·
+`GET /api/tests?section=&child=` · `POST /api/tests/:id/start {child}` · `POST /api/attempts/:id/submit {answers}` ·
+`GET /api/leaderboard?section=&grade=&region=` · Admin: `GET /api/admin/stats`, `PUT /api/admin/settings`, `GET|POST|PUT|DELETE /api/admin/tests[/:id]`, `PUT /api/admin/tests/:id/questions`, `GET|PUT /api/admin/users[/:id]`.
+Avtorizatsiya: `Authorization: Bearer <token>`.

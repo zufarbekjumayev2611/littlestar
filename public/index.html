@@ -157,11 +157,98 @@ canvas#cf{position:fixed;inset:0;pointer-events:none;z-index:60}
  .tinputs,.choose{grid-template-columns:1fr}
  .ibtn{width:38px;height:38px;font-size:17px}
 }
+
+/* ===== navigatsiya ===== */
+.nav{display:flex;gap:6px;margin-left:14px}
+.nav a{color:#fff;text-decoration:none;font-weight:900;font-size:16px;padding:9px 14px;border-radius:14px;background:rgba(255,255,255,.1);cursor:pointer;white-space:nowrap}
+.nav a.on{background:#fff;color:var(--ink)}
+@media (max-width:860px){
+ .nav{position:fixed;left:0;right:0;bottom:0;margin:0;z-index:40;background:#1b1450;padding:6px 6px calc(6px + env(safe-area-inset-bottom));justify-content:space-around;box-shadow:0 -4px 16px rgba(0,0,0,.3)}
+ .nav a{flex:1;text-align:center;font-size:12px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;background:none}
+ .nav a i{font-style:normal;font-size:22px}
+ .nav a.on{background:rgba(255,255,255,.15);color:#fff}
+ body{padding-bottom:76px}
+}
+@media (min-width:861px){.nav a i{font-style:normal;margin-right:6px}}
+/* ===== kabinet / testlar ===== */
+.card{background:#fff;border-radius:24px;padding:20px;box-shadow:0 8px 0 rgba(0,0,0,.15);margin-bottom:16px}
+.card h2{margin:0 0 6px;font-size:26px;font-weight:900}
+.card h3{margin:0 0 8px;font-size:20px;font-weight:900}
+.muted{color:#7a74a8;font-weight:700}
+.field{display:block;margin:12px 0}
+.field span{display:block;font-weight:900;font-size:14px;color:#7a74a8;margin-bottom:5px}
+.field input,.field select{font:inherit;font-weight:800;font-size:18px;padding:11px 14px;border-radius:14px;border:3px solid #e6e1ff;width:100%;background:#fff;color:var(--ink);outline:none}
+.field input:focus,.field select:focus{border-color:var(--purple)}
+.phone{display:flex;align-items:center;border:3px solid #e6e1ff;border-radius:14px;overflow:hidden}
+.phone b{padding:0 10px 0 14px;font-size:18px}.phone input{border:none!important;padding-left:4px!important}
+.err{background:#ffe0ea;color:#c2185b;border-radius:14px;padding:10px 14px;font-weight:800;margin:10px 0}
+.ok{background:#d8f7e7;color:#0f7a49;border-radius:14px;padding:10px 14px;font-weight:800;margin:10px 0}
+.tabs2{display:flex;background:#f1eeff;border-radius:16px;padding:5px;gap:5px;margin:10px 0 4px}
+.tabs2 button{flex:1;border-radius:12px;padding:10px;font-weight:900;font-size:17px;background:none;color:var(--ink)}
+.tabs2 button.on{background:#fff;box-shadow:0 3px 0 rgba(0,0,0,.08)}
+.kids{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.kid{display:flex;gap:8px;align-items:center;background:#f1eeff;border-radius:16px;padding:10px 14px;font-weight:900}
+.kid.on{background:var(--purple);color:#fff}
+.kid small{font-weight:700;opacity:.8}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.scard{border-radius:24px;padding:20px;color:#fff;text-align:left;box-shadow:0 7px 0 rgba(0,0,0,.22);position:relative;min-height:150px}
+.scard b{display:block;font-size:21px;font-weight:900;margin-top:6px}
+.scard small{display:block;font-size:14px;font-weight:700;opacity:.92;margin-top:6px;line-height:1.35}
+.scard .ic{font-size:40px}
+.scard .lock{position:absolute;top:12px;right:14px;background:rgba(0,0,0,.25);border-radius:999px;padding:4px 10px;font-weight:900;font-size:13px}
+.tlist{display:flex;flex-direction:column;gap:10px}
+.trow{display:flex;align-items:center;gap:12px;background:#f7f5ff;border-radius:18px;padding:14px 16px;flex-wrap:wrap}
+.trow .nm{font-weight:900;font-size:19px;flex:1;min-width:150px}
+.trow .meta{color:#7a74a8;font-weight:800;font-size:14px}
+.tag{display:inline-block;border-radius:999px;padding:3px 10px;font-weight:900;font-size:13px;background:#ece8ff;color:#5b33c9}
+.tag.g{background:#d8f7e7;color:#0f7a49}
+.btn{border-radius:14px;padding:10px 18px;font-weight:900;font-size:16px;background:var(--purple);color:#fff;box-shadow:0 4px 0 #5b33c9}
+.btn.g{background:var(--green);box-shadow:0 4px 0 #138a52}.btn.w{background:#f1eeff;color:var(--ink);box-shadow:0 4px 0 #d8d2f5}
+.btn.r{background:var(--pink);box-shadow:0 4px 0 #c2185b}
+.btn:active{transform:translateY(3px);box-shadow:none}
+.btn:disabled{opacity:.5}
+/* test yechish */
+.run{display:grid;grid-template-columns:1fr 290px;gap:16px;align-items:start}
+.qcard{background:#fff;border-radius:24px;padding:22px;box-shadow:0 8px 0 rgba(0,0,0,.15)}
+.qhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.qtext{font-size:clamp(19px,2vw,26px);font-weight:800;line-height:1.45;white-space:pre-wrap;margin:6px 0 14px}
+.qimg{max-width:100%;max-height:340px;border-radius:14px;display:block;margin:0 auto 14px}
+.aopts{display:flex;flex-direction:column;gap:10px}
+.aopt{display:flex;align-items:center;gap:14px;text-align:left;border-radius:18px;padding:14px 16px;background:#f7f5ff;font-size:clamp(17px,1.8vw,22px);font-weight:800;color:var(--ink);border:3px solid transparent}
+.aopt .L{flex:none;width:40px;height:40px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--purple);box-shadow:0 2px 0 rgba(0,0,0,.08)}
+.aopt.sel{border-color:var(--purple);background:#ece8ff}.aopt.sel .L{background:var(--purple);color:#fff}
+.aopt.right{border-color:var(--green);background:#d8f7e7}.aopt.right .L{background:var(--green);color:#fff}
+.aopt.wrong{border-color:var(--pink);background:#ffe0ea}.aopt.wrong .L{background:var(--pink);color:#fff}
+.qnav{display:flex;justify-content:space-between;gap:10px;margin-top:16px}
+.side{background:#fff;border-radius:24px;padding:16px;box-shadow:0 8px 0 rgba(0,0,0,.15);position:sticky;top:10px}
+.timer{font-size:34px;font-weight:900;text-align:center;border-radius:16px;background:#fff6d6;padding:6px;margin-bottom:10px}
+.timer.low{background:#ffe0ea;color:#c2185b}
+.ngrid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-height:46vh;overflow:auto;padding:2px}
+.ngrid button{aspect-ratio:1;border-radius:10px;font-weight:900;font-size:14px;background:#f1eeff;color:var(--ink)}
+.ngrid button.a{background:var(--purple);color:#fff}.ngrid button.c{box-shadow:0 0 0 3px var(--yellow)}
+.ngrid button.r{background:var(--green);color:#fff}.ngrid button.w{background:var(--pink);color:#fff}
+.modal{position:fixed;inset:0;background:rgba(27,20,80,.7);z-index:70;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal .card{max-width:460px;width:100%;text-align:center}
+.big-score{font-size:clamp(54px,8vw,90px);font-weight:900;color:var(--purple);line-height:1}
+.ranks{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:16px 0}
+.rk{border-radius:20px;padding:16px;color:#fff;text-align:center}
+.rk b{display:block;font-size:34px;font-weight:900}.rk span{font-weight:800;font-size:14px;opacity:.95}
+table.lb{width:100%;border-collapse:collapse}
+table.lb td,table.lb th{padding:10px 8px;text-align:left;border-bottom:2px dashed #eee;font-weight:800}
+table.lb th{color:#7a74a8;font-size:13px;text-transform:uppercase}
+table.lb tr.me td{background:#fff6d6}
+table.lb td.p{font-weight:900;width:46px;text-align:center}
+table.lb td.s{font-weight:900;color:#e0a800;white-space:nowrap}
+table.lb small{display:block;color:#7a74a8;font-weight:700}
+.rev{border-radius:18px;padding:14px;margin:10px 0;background:#f7f5ff}
+.rev .expl{margin-top:10px;background:#fff6d6;border-radius:12px;padding:10px 12px;font-weight:700}
+@media (max-width:860px){.run{grid-template-columns:1fr}.side{position:static;order:-1}.ngrid{grid-template-columns:repeat(10,1fr);max-height:none}.timer{font-size:26px}}
 </style>
 </head>
 <body>
 <header class="top">
   <div class="logo" id="home-link"><span class="st">⭐</span><div><b>Little Star</b><small>Navoiy-Qorako‘l o‘quv markazi</small></div></div>
+  <nav class="nav"><a data-r="games" href="#games"><i>🎮</i>O‘yinlar</a><a data-r="tests" href="#tests"><i>📝</i>Testlar</a><a data-r="rating" href="#rating"><i>🏆</i>Reyting</a><a data-r="profile" href="#profile"><i>👤</i>Kabinet</a></nav>
   <div class="sp"></div>
   <div class="pill" id="mystars">⭐ 0</div>
   <button class="ibtn" id="inst" title="Ilovani o‘rnatish" style="display:none;width:auto;padding:0 12px;font-size:15px;font-weight:900">📲 O‘rnatish</button>
@@ -487,7 +574,7 @@ function bestKey(id){return 'ls_best_'+(S.name||'_')+'_'+id+'_'+S.level}
 function updStars(){$('#mystars').textContent='⭐ '+myStars()}
 
 /* header buttons */
-$('#home-link').onclick=()=>home();
+$('#home-link').onclick=()=>window.go?window.go('games',true):home();
 const sndBtn=$('#snd');const updSnd=()=>sndBtn.textContent=soundOn?'🔊':'🔇';updSnd();
 sndBtn.onclick=()=>{soundOn=!soundOn;store.set('ls_sound',soundOn);updSnd();if(soundOn)sGood()};
 $('#fs').onclick=()=>{try{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen().catch(()=>{})}catch(e){}};
@@ -635,8 +722,232 @@ if('serviceWorker' in navigator&&location.protocol==='https:'){addEventListener(
 let deferredPrompt=null;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;const b=document.getElementById('inst');if(b)b.style.display=''});
 document.getElementById('inst').onclick=async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();try{await deferredPrompt.userChoice}catch(e){}deferredPrompt=null;document.getElementById('inst').style.display='none'};
-home();
+window.LS={home,stopAll,confetti,sWin,sGood,sBad};
 }
+</script>
+<script>
+"use strict";
+/* ============ KABINET: akkaunt, testlar, reyting ============ */
+(function(){
+const $=s=>document.querySelector(s);
+const app=$('#app');
+const LS=window.LS;
+const st={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let token=st.get('ls_token',null);
+let ME=null, META=null;
+let activeChild=st.get('ls_child',null);
+
+async function api(method,path,body){
+  let r;
+  try{r=await fetch('/api'+path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined})}
+  catch(e){throw new Error('Server bilan aloqa yo‘q. Internetni tekshiring.')}
+  let j={};try{j=await r.json()}catch(e){}
+  if(r.status===401&&token&&!path.startsWith('/auth')){token=null;st.del('ls_token');ME=null}
+  if(!r.ok){const e=new Error(j.error||('Xatolik: '+r.status));e.status=r.status;throw e}
+  return j;
+}
+async function loadMeta(){if(!META)META=await api('GET','/meta');return META}
+async function loadMe(){if(!token){ME=null;return null}try{ME=await api('GET','/me')}catch(e){if(e.status===401)ME=null;else throw e}
+  if(ME&&ME.children.length&&!ME.children.some(c=>c.id===activeChild)){activeChild=ME.children[0].id;st.set('ls_child',activeChild)}return ME}
+const child=()=>ME&&ME.children.find(c=>c.id===activeChild);
+const loading=()=>{app.innerHTML='<div class="card" style="text-align:center"><div class="big-score">⭐</div><p class="muted">Yuklanmoqda...</p></div>'};
+const errBox=(e)=>`<div class="card"><div class="err">${esc(e.message||e)}</div><button class="btn" onclick="location.reload()">🔄 Qayta yuklash</button></div>`;
+function modal(html){const m=document.createElement('div');m.className='modal';m.innerHTML=`<div class="card">${html}</div>`;document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)m.remove()});return m}
+
+const SEC_UI={
+  pm1:{ic:'🏛️',bg:'linear-gradient(135deg,#3d8bff,#5fb0ff)',d:'Matematika — 30 ta test (10 yengil, 10 o‘rta, 10 murakkab).'},
+  pm2:{ic:'🎓',bg:'linear-gradient(135deg,#8e5cff,#b07bff)',d:'Matematika (tanqidiy fikrlash, masala yechish) — 40 ta, ingliz tili — 40 ta.'},
+  ixt:{ic:'🏫',bg:'linear-gradient(135deg,#1fa36b,#3fd6a8)',d:'Matematika — 30 ta (10 tasi mantiqiy fikrlash), ingliz tili — 15 ta. 105 daqiqa.'},
+  ol3:{ic:'🥇',bg:'linear-gradient(135deg,#ff9f1c,#ffc145)',d:'3-sinf o‘quvchilari uchun olimpiada masalalari.'},
+  ol4:{ic:'🏆',bg:'linear-gradient(135deg,#ff5c8a,#ff8f6b)',d:'4-sinf o‘quvchilari uchun olimpiada masalalari.'},
+};
+const fmtTime=s=>{s=Math.max(0,Math.round(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return(h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0')};
+const phoneFmt=p=>p?('+'+p.replace(/^(\d{3})(\d{2})(\d{3})(\d{2})(\d{2})$/,'$1 $2 $3 $4 $5')):'';
+
+/* ---------- ROUTER ---------- */
+const ROUTES={games:()=>{LS.home()},tests:viewTests,rating:viewRating,profile:viewProfile};
+let curRoute='games';
+function go(r,force){if(!ROUTES[r])r='games';
+  if(window.__running&&r!=='tests-run'){if(!confirmLeave(()=>{window.__running=false;go(r,true)}))return}
+  curRoute=r;document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.r===r));
+  LS.stopAll();if(location.hash!=='#'+r)history.replaceState(null,'','#'+r);window.scrollTo(0,0);ROUTES[r]()}
+function confirmLeave(ok){const m=modal(`<h3>Test davom etmoqda</h3><p class="muted">Javoblaringiz saqlangan. Keyinroq “Testlar” bo‘limidan davom ettirishingiz mumkin. Chiqasizmi?</p><div class="btns"><button class="btn w" id="no">Qolish</button><button class="btn r" id="yes">Chiqish</button></div>`);
+  m.querySelector('#no').onclick=()=>m.remove();m.querySelector('#yes').onclick=()=>{m.remove();stopRun();ok()};return false}
+window.go=go;
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();go(a.dataset.r,true)}));
+addEventListener('hashchange',()=>{const r=location.hash.slice(1);if(r&&r!==curRoute&&ROUTES[r])go(r)});
+
+/* ---------- AUTH ---------- */
+function authCard(msg){
+  let mode='login';
+  const draw=()=>{app.innerHTML=`<div class="card" style="max-width:520px;margin:0 auto">
+    <h2>👤 Kabinet</h2>${msg?`<p class="muted">${msg}</p>`:''}
+    <div class="tabs2"><button data-m="login" class="${mode==='login'?'on':''}">Kirish</button><button data-m="reg" class="${mode==='reg'?'on':''}">Ro‘yxatdan o‘tish</button></div>
+    <form id="af">
+      <label class="field"><span>Ota-ona telefon raqami</span><div class="phone"><b>+998</b><input id="ph" inputmode="numeric" maxlength="12" placeholder="90 123 45 67" autocomplete="tel"></div></label>
+      <label class="field"><span>Parol${mode==='reg'?' (kamida 6 belgi)':''}</span><input id="pw" type="password" autocomplete="${mode==='reg'?'new-password':'current-password'}"></label>
+      ${mode==='reg'?'<label class="field"><span>Ota-onaning ismi (ixtiyoriy)</span><input id="pn" maxlength="60"></label>':''}
+      <div id="ae"></div>
+      <button class="go" type="submit">${mode==='login'?'Kirish':'Ro‘yxatdan o‘tish'}</button>
+    </form>
+    ${mode==='login'?'<p class="muted" style="text-align:center;margin-top:14px">Parolni unutdingizmi? O‘quv markazi administratoriga murojaat qiling.</p>':''}</div>`;
+    app.querySelectorAll('.tabs2 button').forEach(b=>b.onclick=()=>{mode=b.dataset.m;draw()});
+    $('#af').onsubmit=async e=>{e.preventDefault();const btn=e.submitter||$('#af .go');btn.disabled=true;$('#ae').innerHTML='';
+      try{const j=await api('POST',mode==='login'?'/auth/login':'/auth/register',{phone:$('#ph').value,password:$('#pw').value,parent_name:$('#pn')?$('#pn').value:''});
+        token=j.token;st.set('ls_token',token);await loadMe();go(curRoute==='profile'?'profile':curRoute,true)}
+      catch(err){$('#ae').innerHTML=`<div class="err">${esc(err.message)}</div>`;btn.disabled=false}};
+  };draw();
+}
+async function childForm(c,onDone){
+  const meta=await loadMeta();
+  const m=modal(`<h3>${c?'Bola ma’lumotlarini tahrirlash':'Bola qo‘shish'}</h3>
+    <form id="cf2" style="text-align:left">
+      <label class="field"><span>Ism-familiya</span><input id="cn" maxlength="50" value="${esc(c?c.name:'')}"></label>
+      <label class="field"><span>Sinf</span><select id="cg">${[1,2,3,4].map(g=>`<option value="${g}" ${c&&c.grade===g?'selected':(!c&&g===4?'selected':'')}>${g}-sinf</option>`).join('')}</select></label>
+      <label class="field"><span>Viloyat</span><select id="cr"><option value="">— tanlang —</option>${meta.regions.map(r=>`<option ${c&&c.region===r?'selected':''}>${esc(r)}</option>`).join('')}</select></label>
+      <label class="field"><span>Tuman / shahar</span><input id="cd" maxlength="60" value="${esc(c?c.district:'')}"></label>
+      <label class="field"><span>Maktab yoki o‘quv markazi (ixtiyoriy)</span><input id="cs" maxlength="80" value="${esc(c?c.school:'')}"></label>
+      <div id="ce"></div>
+      <div class="btns"><button type="button" class="btn w" id="cx">Bekor qilish</button><button class="btn g" type="submit">Saqlash</button></div></form>`);
+  m.querySelector('#cx').onclick=()=>m.remove();
+  m.querySelector('#cf2').onsubmit=async e=>{e.preventDefault();const b={name:m.querySelector('#cn').value,grade:+m.querySelector('#cg').value,region:m.querySelector('#cr').value,district:m.querySelector('#cd').value,school:m.querySelector('#cs').value};
+    try{if(c)await api('PUT','/children/'+c.id,b);else{const j=await api('POST','/children',b);activeChild=j.id;st.set('ls_child',activeChild)}m.remove();await loadMe();onDone&&onDone()}
+    catch(err){m.querySelector('#ce').innerHTML=`<div class="err">${esc(err.message)}</div>`}};
+}
+function kidsBar(onChange){
+  return `<div class="kids">${ME.children.map(c=>`<button class="kid ${c.id===activeChild?'on':''}" data-k="${c.id}">🧒 ${esc(c.name)} <small>${c.grade}-sinf</small></button>`).join('')}<button class="kid" id="addk">➕ Bola qo‘shish</button></div>`;
+}
+function bindKids(rerender){app.querySelectorAll('.kid[data-k]').forEach(b=>b.onclick=()=>{activeChild=+b.dataset.k;st.set('ls_child',activeChild);rerender()});const a=$('#addk');if(a)a.onclick=()=>childForm(null,rerender)}
+
+/* ---------- KABINET ---------- */
+async function viewProfile(){
+  loading();
+  try{await loadMe()}catch(e){app.innerHTML=errBox(e);return}
+  if(!ME)return authCard('Testlar yechish va respublika reytingida qatnashish uchun ota-ona telefon raqami bilan ro‘yxatdan o‘ting. O‘yinlar bo‘limi hammaga ochiq.');
+  const a=ME.account;const meta=await loadMeta().catch(()=>({free_mode:true}));
+  const prem=a.premium_until*1000>Date.now();
+  app.innerHTML=`<div class="card"><h2>👤 Kabinet</h2>
+    <p class="muted">📱 ${phoneFmt(a.phone)}${a.parent_name?' · '+esc(a.parent_name):''}</p>
+    <div style="margin:10px 0">${meta.free_mode?'<span class="tag g">🎁 Hozircha barcha bo‘limlar bepul</span>':prem?`<span class="tag g">⭐ Obuna faol: ${new Date(a.premium_until*1000).toLocaleDateString('uz')} gacha</span>`:'<span class="tag">Bepul tarif</span>'}</div>
+    <div class="btns" style="justify-content:flex-start">${a.role==='admin'?'<a class="btn" href="/admin" style="text-decoration:none">🛠️ Admin panel</a>':''}<button class="btn w" id="lo">Chiqish</button></div></div>
+   <div class="card"><h3>🧒 Farzandlar</h3>
+    ${ME.children.length?ME.children.map(c=>`<div class="trow"><div class="nm">${esc(c.name)} <span class="tag">${c.grade}-sinf</span><div class="meta">${esc(c.region)}${c.district?', '+esc(c.district):''}${c.school?' · '+esc(c.school):''}</div></div><button class="btn w" data-e="${c.id}">✏️</button><button class="btn r" data-d="${c.id}">🗑️</button></div>`).join(''):'<p class="muted">Hali bola qo‘shilmagan. Testlar va reyting bola nomidan yuritiladi.</p>'}
+    <button class="go" id="addc" style="margin-top:12px">➕ Bola qo‘shish</button></div>`;
+  $('#lo').onclick=async()=>{try{await api('POST','/auth/logout')}catch(e){}token=null;st.del('ls_token');ME=null;viewProfile()};
+  $('#addc').onclick=()=>childForm(null,viewProfile);
+  app.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>childForm(ME.children.find(c=>c.id===+b.dataset.e),viewProfile));
+  app.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{const c=ME.children.find(x=>x.id===+b.dataset.d);const m=modal(`<h3>${esc(c.name)} o‘chirilsinmi?</h3><p class="muted">Uning barcha natijalari ham o‘chadi.</p><div class="btns"><button class="btn w" id="n">Yo‘q</button><button class="btn r" id="y">O‘chirish</button></div>`);
+    m.querySelector('#n').onclick=()=>m.remove();m.querySelector('#y').onclick=async()=>{await api('DELETE','/children/'+c.id);m.remove();viewProfile()}});
+}
+
+/* ---------- TESTLAR ---------- */
+async function viewTests(){
+  loading();
+  let meta;try{meta=await loadMeta();await loadMe()}catch(e){app.innerHTML=errBox(e);return}
+  const run=st.get('ls_run',null);
+  const cards=meta.sections.map(s=>{const u=SEC_UI[s.id];const locked=ME&&ME.access&&!ME.access[s.id];
+    return`<button class="scard" data-s="${s.id}" style="background:${u.bg}">${locked?'<span class="lock">🔒 Pullik</span>':s.premium?'<span class="lock">⭐ Premium</span>':''}<span class="ic">${u.ic}</span><b>${esc(s.name)}</b><small>${u.d}</small></button>`}).join('');
+  app.innerHTML=`${run&&ME?`<div class="card" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div style="flex:1"><h3>⏳ Tugallanmagan test</h3><p class="muted" style="margin:0">${esc(run.test.title)} — ${esc((meta.sections.find(s=>s.id===run.test.section)||{}).name||'')}</p></div><button class="btn g" id="cont">Davom ettirish</button></div>`:''}
+    <div class="card"><h2>📝 Imtihonlarga tayyorlov</h2><p class="muted" style="margin:4px 0 12px">Test yeching va respublika bo‘yicha o‘rningizni ko‘ring. Reytingga har bir testning birinchi urinishi hisoblanadi.</p>
+    ${ME?(ME.children.length?kidsBar():`<button class="go" id="addk1">➕ Avval bola qo‘shing</button>`):`<button class="go" id="login1">👤 Kirish / Ro‘yxatdan o‘tish</button>`}</div>
+    <div class="sgrid">${cards}</div>`;
+  if(ME)bindKids(viewTests);
+  const l1=$('#login1');if(l1)l1.onclick=()=>go('profile',true);
+  const a1=$('#addk1');if(a1)a1.onclick=()=>childForm(null,viewTests);
+  const c1=$('#cont');if(c1)c1.onclick=()=>startRun(run);
+  app.querySelectorAll('.scard').forEach(b=>b.onclick=()=>{if(!ME)return go('profile',true);if(!child())return childForm(null,viewTests);viewSection(b.dataset.s)});
+}
+async function viewSection(sec){
+  loading();let j;try{j=await api('GET',`/tests?section=${sec}&child=${activeChild}`)}catch(e){app.innerHTML=errBox(e);return}
+  const meta=await loadMeta();
+  app.innerHTML=`<div class="bar-top"><button class="back" id="bk">← Orqaga</button><div class="ttl">${SEC_UI[sec].ic} ${esc(j.section.name)}</div></div>
+    <div class="card"><p class="muted" style="margin-top:0">${SEC_UI[sec].d}</p>${kidsBar()}</div>
+    ${j.access?'':`<div class="card"><div class="err">🔒 ${esc(meta.contact_text||'Bu bo‘lim pullik')}</div></div>`}
+    <div class="card"><div class="tlist">${j.tests.length?j.tests.map(t=>`<div class="trow"><div class="nm">${esc(t.title)}<div class="meta">📋 ${t.count} ta savol · ⏱️ ${t.duration_min} daqiqa${t.attempts?` · ${t.attempts} marta yechilgan`:''}</div></div>
+      ${t.first?`<span class="tag g">Natija: ${t.first.correct}/${t.first.total}</span>`:''}${t.best&&t.attempts>1?`<span class="tag">Eng yaxshi: ${t.best.correct}/${t.best.total}</span>`:''}
+      <button class="btn ${t.attempts?'w':'g'}" data-t="${t.id}" ${j.access?'':'disabled'}>${t.attempts?'🔁 Qayta yechish':'▶️ Boshlash'}</button></div>`).join(''):'<p class="muted">Bu bo‘limda hozircha test yo‘q.</p>'}</div></div>`;
+  $('#bk').onclick=viewTests;bindKids(()=>viewSection(sec));
+  app.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{const t=j.tests.find(x=>x.id===+b.dataset.t);const c=child();
+    const m=modal(`<h3>${esc(j.section.name)}</h3><p style="font-weight:900;font-size:20px;margin:6px 0">${esc(t.title)}</p><p class="muted">📋 ${t.count} ta savol · ⏱️ ${t.duration_min} daqiqa<br>👦 ${esc(c.name)}</p>${t.attempts?'<div class="ok">Bu qayta urinish bo‘ladi — reytingga birinchi natija hisoblanadi.</div>':'<p class="muted">Vaqt boshlanganidan keyin to‘xtatib bo‘lmaydi. Tayyormisiz?</p>'}<div class="btns"><button class="btn w" id="n">Bekor</button><button class="btn g" id="y">▶️ Boshlash</button></div>`);
+    m.querySelector('#n').onclick=()=>m.remove();
+    m.querySelector('#y').onclick=async()=>{m.querySelector('#y').disabled=true;try{const s=await api('POST',`/tests/${t.id}/start`,{child:activeChild});m.remove();
+      const r={attempt_id:s.attempt_id,test:s.test,questions:s.questions,answers:Array(s.questions.length).fill(null),started:Date.now(),idx:0,child:c.name};st.set('ls_run',r);startRun(r)}
+      catch(e){m.querySelector('.btns').insertAdjacentHTML('beforebegin',`<div class="err">${esc(e.message)}</div>`)}}});
+}
+
+/* ---------- TEST YECHISH ---------- */
+let runTimer=null;
+function stopRun(){clearInterval(runTimer);runTimer=null;window.__running=false}
+function startRun(r){
+  window.__running=true;curRoute='tests';
+  const L='ABCDEFGH';const total=r.questions.length;const end=r.started+r.test.duration_min*60000;
+  const save=()=>st.set('ls_run',r);
+  app.innerHTML=`<div class="run"><div class="qcard" id="qc"></div><div class="side"><div class="timer" id="tm"></div><div class="muted" style="text-align:center;margin-bottom:8px" id="cnt"></div><div class="ngrid" id="ng"></div><button class="go" id="fin" style="margin-top:12px;font-size:20px">✅ Yakunlash</button></div></div>`;
+  const drawNav=()=>{$('#ng').innerHTML=r.questions.map((q,i)=>`<button class="${r.answers[i]!=null?'a':''} ${i===r.idx?'c':''}" data-i="${i}">${i+1}</button>`).join('');
+    $('#cnt').textContent=`Javob berildi: ${r.answers.filter(x=>x!=null).length} / ${total}`;
+    $('#ng').querySelectorAll('button').forEach(b=>b.onclick=()=>{r.idx=+b.dataset.i;save();draw()})};
+  const draw=()=>{const q=r.questions[r.idx];
+    $('#qc').innerHTML=`<div class="qhead"><span class="tag">${r.idx+1} / ${total}</span><span class="tag g">${esc(q.subject)}</span><span class="muted">${esc(r.test.title)} · ${esc(r.child||'')}</span></div>
+      <div class="qtext">${esc(q.text)}</div>${q.image?`<img class="qimg" src="${esc(q.image)}" alt="">`:''}
+      <div class="aopts">${q.options.map((o,k)=>`<button class="aopt ${r.answers[r.idx]===k?'sel':''}" data-k="${k}"><span class="L">${L[k]}</span><span>${esc(o)}</span></button>`).join('')}</div>
+      <div class="qnav"><button class="btn w" id="pv" ${r.idx===0?'disabled':''}>← Oldingi</button><button class="btn" id="nx">${r.idx===total-1?'Yakunlash':'Keyingi →'}</button></div>`;
+    $('#qc').querySelectorAll('.aopt').forEach(b=>b.onclick=()=>{const k=+b.dataset.k;r.answers[r.idx]=r.answers[r.idx]===k?null:k;save();draw();
+      if(r.answers[r.idx]!=null&&r.idx<total-1)setTimeout(()=>{r.idx++;save();draw()},250)});
+    $('#pv').onclick=()=>{r.idx--;save();draw()};
+    $('#nx').onclick=()=>{if(r.idx===total-1)askFinish();else{r.idx++;save();draw()}};
+    drawNav();};
+  const tick=()=>{const left=(end-Date.now())/1000;const t=$('#tm');if(!t)return stopRun();t.textContent='⏱️ '+fmtTime(left);t.classList.toggle('low',left<300);if(left<=0){stopRun();submit(true)}};
+  const askFinish=()=>{const un=r.answers.filter(x=>x==null).length;const m=modal(`<h3>Testni yakunlaysizmi?</h3>${un?`<div class="err">${un} ta savolga javob berilmagan</div>`:'<div class="ok">Barcha savollarga javob berildi 👍</div>'}<div class="btns"><button class="btn w" id="n">Davom etish</button><button class="btn g" id="y">Yakunlash</button></div>`);
+    m.querySelector('#n').onclick=()=>m.remove();m.querySelector('#y').onclick=()=>{m.remove();submit(false)}};
+  const submit=async(auto)=>{stopRun();app.innerHTML='<div class="card" style="text-align:center"><div class="big-score">⏳</div><p class="muted">'+(auto?'Vaqt tugadi! ':'')+'Natija hisoblanmoqda...</p></div>';
+    try{const res=await api('POST',`/attempts/${r.attempt_id}/submit`,{answers:r.answers});st.del('ls_run');showResult(r,res)}
+    catch(e){window.__running=false;app.innerHTML=`<div class="card"><div class="err">${esc(e.message)}</div><p class="muted">Javoblaringiz saqlangan. Internet tiklangach qayta yuboring.</p><button class="go" id="rs">🔁 Qayta yuborish</button></div>`;$('#rs').onclick=()=>submit(false)}};
+  $('#fin').onclick=askFinish;draw();tick();runTimer=setInterval(tick,1000);
+  if(Date.now()>=end){stopRun();submit(true)}
+}
+function showResult(r,res){
+  const pct=Math.round(res.correct/Math.max(1,res.total)*100);
+  if(pct>=70){LS.sWin();LS.confetti(200)}else LS.sGood();
+  let filter='all';
+  const drawRev=()=>{$('#rv').innerHTML=res.review.map((q,i)=>({q,i})).filter(({q})=>filter==='all'||q.chosen!==q.correct).map(({q,i})=>`<div class="rev"><div class="qhead"><span class="tag">${i+1}</span><span class="tag ${q.chosen===q.correct?'g':''}">${q.chosen===q.correct?'✅ To‘g‘ri':q.chosen==null?'⚪ Javob berilmagan':'❌ Xato'}</span></div>
+     <div class="qtext" style="font-size:19px">${esc(q.text)}</div>${q.image?`<img class="qimg" src="${esc(q.image)}" alt="">`:''}<div class="aopts">${q.options.map((o,k)=>`<div class="aopt ${k===q.correct?'right':k===q.chosen?'wrong':''}"><span class="L">${'ABCDEFGH'[k]}</span><span>${esc(o)}</span></div>`).join('')}</div>
+     ${q.explanation?`<div class="expl">💡 ${esc(q.explanation)}</div>`:''}</div>`).join('')||'<p class="muted">Xato yo‘q — barakalla! 🎉</p>'};
+  const sr=res.section_rank,tr=res.test_rank;
+  app.innerHTML=`<div class="card" style="text-align:center"><div class="muted">${esc(r.test.title)} · ${esc(r.child||'')}</div><div class="big-score" style="margin-top:8px">${res.correct} / ${res.total}</div><p style="font-size:22px;font-weight:900;margin:8px 0">${pct}% · ⏱️ ${fmtTime(res.time_sec)}</p>
+     ${res.counted?'':'<div class="ok">Bu qayta urinish. Reytingda birinchi urinish natijasi turadi.</div>'}
+     <div class="ranks"><div class="rk" style="background:var(--blue)"><b>${sr.place?sr.place+'-o‘rin':'—'}</b><span>Respublika (bo‘lim) · ${sr.total} ishtirokchi</span></div>
+     <div class="rk" style="background:var(--green)"><b>${sr.region_place?sr.region_place+'-o‘rin':'—'}</b><span>Viloyatingizda · ${sr.region_total} ishtirokchi</span></div>
+     <div class="rk" style="background:var(--orange)"><b>${tr.place?tr.place+'-o‘rin':'—'}</b><span>Shu test bo‘yicha · ${tr.total} ishtirokchi</span></div></div>
+     <div class="btns"><button class="btn" id="tb">📝 Testlarga qaytish</button><button class="btn g" id="rb">🏆 Reytingni ko‘rish</button></div></div>
+   <div class="card"><div class="qhead"><h3 style="margin:0">Javoblar tahlili</h3><div class="tabs2" style="margin:0"><button class="on" data-f="all">Hammasi</button><button data-f="bad">Xatolar</button></div></div><div id="rv"></div></div>`;
+  app.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{filter=b.dataset.f;app.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x===b));drawRev()});
+  $('#tb').onclick=()=>viewSection(r.test.section);$('#rb').onclick=()=>{ratingState.section=r.test.section;go('rating',true)};drawRev();
+}
+
+/* ---------- REYTING ---------- */
+const ratingState={section:'pm1',grade:0,region:''};
+async function viewRating(){
+  loading();let meta;try{meta=await loadMeta();await loadMe().catch(()=>{})}catch(e){app.innerHTML=errBox(e);return}
+  const S=ratingState;let j;
+  try{j=await api('GET',`/leaderboard?section=${S.section}&grade=${S.grade}&region=${encodeURIComponent(S.region)}`)}catch(e){app.innerHTML=errBox(e);return}
+  const myIds=new Set(j.mine.map(x=>x.id));
+  const med=p=>['🥇','🥈','🥉'][p-1]||p;
+  app.innerHTML=`<div class="card"><h2>🏆 Respublika reytingi</h2><p class="muted" style="margin:4px 0 10px">Har bir testning birinchi urinishidagi to‘g‘ri javoblar yig‘indisi (ball). Teng ballda tezroq yechgan yuqorida.</p>
+    <div class="chips" id="rs">${meta.sections.map(s=>`<button class="chip ${S.section===s.id?'on':''}" data-v="${s.id}">${SEC_UI[s.id].ic} ${esc(s.name.replace('Prezident maktablari','PM').replace('Matematika olimpiadasi','Olimpiada'))}</button>`).join('')}</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><div class="chips" id="rg">${[[0,'Barcha sinflar'],[3,'3-sinf'],[4,'4-sinf']].map(([v,t])=>`<button class="chip ${S.grade===v?'on':''}" data-v="${v}">${t}</button>`).join('')}</div>
+    <select id="rr" class="chip" style="border:none;font:inherit;font-weight:900"><option value="">🇺🇿 Butun respublika</option>${meta.regions.map(r=>`<option ${S.region===r?'selected':''}>${esc(r)}</option>`).join('')}</select></div></div>
+    ${j.mine.length?`<div class="card"><h3>⭐ Farzandlaringiz o‘rni</h3>${j.mine.map(m=>`<div class="trow"><div class="nm">${esc(m.name)}<div class="meta">${m.score} ball · ${m.tests} ta test</div></div><span class="tag g" style="font-size:18px">${m.place}-o‘rin / ${j.total}</span></div>`).join('')}</div>`:''}
+    <div class="card">${j.top.length?`<table class="lb"><tr><th>#</th><th>O‘quvchi</th><th>Ball</th></tr>${j.top.map(r=>`<tr class="${myIds.has(r.id)?'me':''}"><td class="p">${med(r.place)}</td><td>${esc(r.name)} <span class="tag">${r.grade}-sinf</span><small>${esc(r.region)}${r.district?', '+esc(r.district):''}${r.school?' · '+esc(r.school):''}</small></td><td class="s">${r.score} <small>${r.tests} test</small></td></tr>`).join('')}</table>`:'<p class="muted">Hali natijalar yo‘q. Birinchi bo‘ling! 🚀</p>'}</div>`;
+  app.querySelectorAll('#rs .chip').forEach(b=>b.onclick=()=>{S.section=b.dataset.v;viewRating()});
+  app.querySelectorAll('#rg .chip').forEach(b=>b.onclick=()=>{S.grade=+b.dataset.v;viewRating()});
+  $('#rr').onchange=e=>{S.region=e.target.value;viewRating()};
+}
+
+/* ---------- START ---------- */
+const startR=location.hash.slice(1);
+go(ROUTES[startR]?startR:'games',true);
+})();
 </script>
 </body>
 </html>
