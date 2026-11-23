@@ -54,6 +54,8 @@ th{font-size:12px;color:#7a74a8;text-transform:uppercase}
 <body>
 <header><div><b>⭐ Little Star — Admin</b><br><small>Navoiy-Qorako‘l o‘quv markazi</small></div><div class="sp"></div><div class="tabs" id="tabs"></div></header>
 <main id="m"></main>
+<script src="/acad-lib.js"></script>
+<script src="/teach.js"></script>
 <script>
 "use strict";
 const $=s=>document.querySelector(s),M=$('#m');
@@ -71,13 +73,13 @@ const dt=t=>t?new Date(t*1000).toLocaleDateString('uz'):'—';
 function login(msg){$('#tabs').innerHTML='';
   M.innerHTML=`<div class="card" style="max-width:420px;margin:40px auto"><h2>🔐 Admin kirishi</h2>${msg?`<div class="err">${esc(msg)}</div>`:''}
   <form id="lf"><label class="f"><span>Telefon (998...)</span><input id="ph" inputmode="numeric"></label><label class="f"><span>Parol</span><input id="pw" type="password"></label><div id="le"></div><button class="btn" style="width:100%;padding:12px">Kirish</button></form></div>`;
-  $('#lf').onsubmit=async e=>{e.preventDefault();try{const j=await api('POST','/auth/login',{phone:$('#ph').value,password:$('#pw').value});if(j.account.role!=='admin')throw new Error('Bu akkaunt admin emas');token=j.token;localStorage.setItem('ls_token',JSON.stringify(token));start()}catch(err){$('#le').innerHTML=`<div class="err">${esc(err.message)}</div>`}}}
+  $('#lf').onsubmit=async e=>{e.preventDefault();try{const j=await api('POST','/auth/login',{phone:$('#ph').value,password:$('#pw').value});if(!['admin','teacher'].includes(j.account.role))throw new Error('Bu akkaunt admin yoki o‘qituvchi emas');token=j.token;localStorage.setItem('ls_token',JSON.stringify(token));start()}catch(err){$('#le').innerHTML=`<div class="err">${esc(err.message)}</div>`}}}
 async function start(){if(!token)return login();
-  try{const me=await api('GET','/me');if(me.account.role!=='admin')return login('Bu akkaunt admin emas')}catch(e){return login(e.status===401?'':e.message)}
-  const T=[['dash','📊 Boshqaruv'],['tests','📝 Testlar'],['users','👥 Foydalanuvchilar'],['site','🌐 Saytga o‘tish']];
+  let role;try{const me=await api('GET','/me');role=me.account.role;if(!['admin','teacher'].includes(role))return login('Bu akkaunt admin yoki o‘qituvchi emas')}catch(e){return login(e.status===401?'':e.message)}
+  const T=role==='admin'?[['dash','📊 Boshqaruv'],['kurs','🎓 Olimpiada kurslari'],['tests','📝 Testlar'],['users','👥 Foydalanuvchilar'],['site','🌐 Saytga o‘tish']]:[['kurs','🎓 Olimpiada kurslari'],['site','🌐 Saytga o‘tish']];
   $('#tabs').innerHTML=T.map(([k,t])=>`<button data-t="${k}">${t}</button>`).join('');
-  $('#tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>tab(b.dataset.t));tab('dash')}
-function tab(k){if(k==='site'){location.href='/';return}$('#tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.t===k));({dash,tests,users})[k]()}
+  $('#tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>tab(b.dataset.t));tab(T[0][0])}
+function tab(k){if(k==='site'){location.href='/';return}$('#tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.t===k));({dash,tests,users,kurs:window.kurs})[k]()}
 
 /* ---------- boshqaruv ---------- */
 async function dash(){M.innerHTML='<p class="muted">Yuklanmoqda...</p>';const s=STATS=await api('GET','/admin/stats');const set=s.settings;
@@ -183,12 +185,12 @@ function parseImport(txt){
 let uq='';
 async function users(){M.innerHTML='<p class="muted">Yuklanmoqda...</p>';const list=await api('GET','/admin/users?q='+encodeURIComponent(uq));const nowS=Date.now()/1000;
   M.innerHTML=`<div class="card"><div class="row"><h2 style="margin:0">👥 Foydalanuvchilar</h2><input id="uq" placeholder="Telefon, ota-ona yoki bola ismi bo‘yicha qidirish" value="${esc(uq)}"><button class="btn" id="us" style="flex:none">🔍 Qidirish</button></div></div>
-  <div class="card" style="overflow:auto"><table><tr><th>Telefon</th><th>Farzandlari</th><th>Testlar</th><th>Obuna</th><th>Amallar</th></tr>${list.map(u=>`<tr><td><b>+${esc(u.phone)}</b>${u.role==='admin'?' <span class="tag">admin</span>':''}<br><span class="muted">${esc(u.parent_name)} · ${dt(u.created_at)}</span></td><td>${esc(u.kids||'—')}</td><td>${u.attempts}</td>
+  <div class="card" style="overflow:auto"><table><tr><th>Telefon</th><th>Farzandlari</th><th>Testlar</th><th>Obuna</th><th>Amallar</th></tr>${list.map(u=>`<tr><td><b>+${esc(u.phone)}</b>${u.role==='admin'?' <span class="tag">admin</span>':u.role==='teacher'?' <span class="tag g">o‘qituvchi</span>':''}<br><span class="muted">${esc(u.parent_name)} · ${dt(u.created_at)}</span></td><td>${esc(u.kids||'—')}</td><td>${u.attempts}</td>
     <td>${u.premium_until>nowS?`<span class="tag g">${dt(u.premium_until)} gacha</span>`:'<span class="tag r">Yo‘q</span>'}</td>
-    <td><button class="btn g sm" data-p="${u.id}:30">+30 kun</button> <button class="btn g sm" data-p="${u.id}:365">+1 yil</button> <button class="btn w sm" data-p="${u.id}:0">Bekor</button><br><button class="btn w sm" data-pw="${u.id}" style="margin-top:4px">🔑 Parol</button> <button class="btn w sm" data-r="${u.id}:${u.role==='admin'?'user':'admin'}" style="margin-top:4px">${u.role==='admin'?'Adminlikdan olish':'Admin qilish'}</button></td></tr>`).join('')}</table>${list.length?'':'<p class="muted">Topilmadi</p>'}</div>`;
+    <td><button class="btn g sm" data-p="${u.id}:30">+30 kun</button> <button class="btn g sm" data-p="${u.id}:365">+1 yil</button> <button class="btn w sm" data-p="${u.id}:0">Bekor</button><br><button class="btn w sm" data-pw="${u.id}" style="margin-top:4px">🔑 Parol</button> <select class="btn w sm" data-r="${u.id}" style="margin-top:4px;width:auto">${[['user','Oddiy foydalanuvchi'],['teacher','O‘qituvchi'],['admin','Admin']].map(([v,t])=>`<option value="${v}" ${u.role===v?'selected':''}>${t}</option>`).join('')}</select></td></tr>`).join('')}</table>${list.length?'':'<p class="muted">Topilmadi</p>'}</div>`;
   $('#us').onclick=()=>{uq=$('#uq').value;users()};$('#uq').onkeydown=e=>{if(e.key==='Enter'){uq=$('#uq').value;users()}};
   M.querySelectorAll('[data-p]').forEach(b=>b.onclick=async()=>{const [id,d]=b.dataset.p.split(':').map(Number);await api('PUT','/admin/users/'+id,{premium_days:d});toast(d?'Obuna berildi ✅':'Obuna bekor qilindi');users()});
-  M.querySelectorAll('[data-r]').forEach(b=>b.onclick=async()=>{const [id,r]=b.dataset.r.split(':');try{await api('PUT','/admin/users/'+id,{role:r});users()}catch(e){toast(e.message)}});
+  M.querySelectorAll('[data-r]').forEach(b=>b.onchange=async()=>{try{await api('PUT','/admin/users/'+b.dataset.r,{role:b.value});toast('Roli o‘zgartirildi ✅');users()}catch(e){toast(e.message);users()}});
   M.querySelectorAll('[data-pw]').forEach(b=>b.onclick=()=>{const m=modal(`<h3>🔑 Yangi parol</h3><input id="np" placeholder="Kamida 6 belgi"><div id="pe"></div><div class="row" style="margin-top:10px"><button class="btn w" id="n">Bekor</button><button class="btn g" id="y">Saqlash</button></div>`);
     m.querySelector('#n').onclick=()=>m.remove();m.querySelector('#y').onclick=async()=>{try{await api('PUT','/admin/users/'+b.dataset.pw,{new_password:m.querySelector('#np').value});m.remove();toast('Parol yangilandi ✅')}catch(e){m.querySelector('#pe').innerHTML=`<div class="err">${esc(e.message)}</div>`}}})}
 start();

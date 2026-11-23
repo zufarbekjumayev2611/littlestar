@@ -20,6 +20,26 @@ Test bo‘limlari:
 
 Har bir testning vaqtini admin paneldan o‘zgartirish mumkin.
 
+## 🎓 Olimpiada bo‘limi (Al-Xorazmiy olimpiadasi, 7–8-sinflar)
+Saytda **🎓 Olimpiada** sahifasi, admin panelda esa **🎓 Olimpiada kurslari** bo‘limi bor. Birinchi ishga tushirishda ikkita kurs avtomatik yaratiladi: “Al-Xorazmiy olimpiadasi — 7-sinf” va “— 8-sinf”. Kurslar qo‘shish, o‘zgartirish va yashirish mumkin.
+
+**O‘qituvchi (admin panel → Olimpiada kurslari):**
+- **Darslar jadvali:** mavzu, sana-vaqt, davomiylik, konspekt. Matnda formulalar yozish mumkin: `$a^2+b^2=c^2$`.
+- **Jonli dars:** “🎥 Jitsi xona yaratish” tugmasi bepul video konferensiya havolasini yaratadi. Zoom yoki Google Meet havolasini ham qo‘yish mumkin. Kursga bitta doimiy havola yoki har bir darsga alohida havola beriladi. O‘quvchi “Jonli darsga qo‘shilish” tugmasini bossa, davomat avtomatik belgilanadi.
+- **Videolar va materiallar:** turlari 🎬 video dars, 📚 material, 📝 uy vazifasi fayli va ✅ yechim. Fayl to‘g‘ridan-to‘g‘ri yuklanadi (2 GB gacha) yoki YouTube havolasi qo‘yiladi. Katta videolarni YouTube’ga “unlisted” qilib joylash tavsiya etiladi.
+- **Yechimlar qachon ochiladi:** vazifa muddati tugagach, darhol yoki hozircha yashirin.
+- **Uyga vazifa:** shart, muddat va maksimal ball. O‘quvchi javobni matn, rasm (telefonda daftarni suratga oladi) yoki PDF ko‘rinishida topshiradi.
+- **Vazifani tekshirish:** ball, izoh va fayl biriktiriladi. O‘quvchi rasmining ustiga **qizil ruchka bilan belgilash** mumkin. Vazifani “qayta ishlashga qaytarish” ham mumkin. “Saqlash va keyingisi” tugmasi navbatdagi vazifaga o‘tkazadi.
+- **O‘quvchilar:** kursga yozilish arizalarini qabul qilish yoki rad etish, telefon raqami bo‘yicha qo‘lda qo‘shish, kursdan chiqarish. Sozlamalarda arizalarni avtomatik qabul qilishni yoqish mumkin.
+- **Jurnal:** davomat va har bir dars bo‘yicha ball. Excel (CSV) faylga yuklab olinadi.
+- **E’lonlar** va har bir dars ostida **savol-javob**.
+
+**Rollar:** admin “Foydalanuvchilar” bo‘limida istalgan akkauntni **O‘qituvchi** qilib belgilashi mumkin. O‘qituvchi admin panelga kiradi va faqat “Olimpiada kurslari” bo‘limini ko‘radi.
+
+**O‘quvchi:** ota-ona akkauntiga 7- yoki 8-sinf o‘quvchi profili qo‘shiladi (endi 1–11-sinflar mavjud). Keyin “Olimpiada” sahifasida kursga ariza yuboriladi. Kurs ochilgach, o‘quvchi darslarni, jonli dars tugmasini, videolarni, vazifalarni, baholarni va yechimlarni ko‘radi. Har bir dars uchun havola mavjud (`/#olymp-l12`), uni Telegram’da ulashish mumkin.
+
+**Fayllar** `data/uploads/` papkasida saqlanadi (`DATA_DIR` o‘zgaruvchisi bilan o‘zgartirish mumkin). Havolalarda tasodifiy uzun kalit bor, uni bilmagan odam faylni ocha olmaydi. Zaxira skripti bu papkani ham nusxalaydi.
+
 ## Talablar
 - Ubuntu 22.04/24.04 VPS (1 GB RAM yetarli).
 - **Node.js 22.13 yoki undan yangi** (24 LTS tavsiya qilinadi).
@@ -54,6 +74,7 @@ Lokal sinash: `npm start` buyrug‘idan keyin http://localhost:3000 va http://lo
 |---|---|
 | `PORT` | 3000 |
 | `DB_PATH` | `data/littlestar.db` |
+| `DATA_DIR` | `DB_PATH` joylashgan papka (yuklangan fayllar `uploads/` ichida) |
 
 Barcha ma’lumotlar bitta SQLite faylida saqlanadi. Zaxira nusxasini muntazam olish kerak.
 
@@ -78,4 +99,5 @@ Telefonlardagi ilova yangi versiyani darhol olishi uchun `public/sw.js` faylidag
 `POST /api/auth/register|login|logout` · `GET /api/meta` · `GET /api/me` · `POST|PUT|DELETE /api/children[/:id]` ·
 `GET /api/tests?section=&child=` · `POST /api/tests/:id/start {child}` · `POST /api/attempts/:id/submit {answers}` ·
 `GET /api/leaderboard?section=&grade=&region=` · Admin: `GET /api/admin/stats`, `PUT /api/admin/settings`, `GET|POST|PUT|DELETE /api/admin/tests[/:id]`, `PUT /api/admin/tests/:id/questions`, `GET|PUT /api/admin/users[/:id]`.
+Olimpiada: `POST /api/upload?name=` (fayl oqimi), `GET /files/:id/:key/:name` · O‘quvchi: `GET /api/academy/courses?child=`, `POST /api/academy/courses/:id/join`, `GET /api/academy/courses/:id?child=`, `GET /api/academy/lessons/:id?child=`, `POST /api/academy/lessons/:id/join|submit|comments` · O‘qituvchi: `/api/teach/courses[/:id]`, `/api/teach/courses/:id/lessons|students|announcements|journal`, `/api/teach/lessons/:id`, `/api/teach/submissions[/:id]`.
 Avtorizatsiya: `Authorization: Bearer <token>`.
