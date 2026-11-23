@@ -28,13 +28,21 @@
   /* ---------- kurslar ro‘yxati ---------- */
   async function kurs() {
     M.innerHTML = '<p class="muted">Yuklanmoqda...</p>';
-    const list = await api('GET', '/teach/courses');
-    M.innerHTML = `<div class="card"><div class="row"><h2 style="margin:0">🎓 Olimpiada kurslari</h2><button class="btn g" id="nc" style="flex:none">➕ Yangi kurs</button></div>
-      <p class="muted">Har bir kursda: darslar jadvali, jonli dars (video konferensiya), video yechimlar, materiallar, uyga vazifalar va ularni tekshirish, jurnal.</p>
-      ${list.map((c) => `<div class="ccard"><div class="t"><b>${esc(c.title)}</b> ${c.published ? '' : '<span class="tag r">Yashirin</span>'}<div class="muted">${c.grade}-sinf · ${c.lessons} ta dars · ${c.students} o‘quvchi</div></div>
+    const [list, olys] = await Promise.all([api('GET', '/teach/courses'), api('GET', '/teach/olympiads')]);
+    const card = (c) => `<div class="ccard"><div class="t"><b>${esc(c.title)}</b> ${c.published ? '' : '<span class="tag r">Yashirin</span>'}<div class="muted">${c.grade}-sinf · ${c.lessons} ta dars · ${c.students} o‘quvchi</div></div>
         ${c.pending ? `<span class="tag r">🙋 ${c.pending} ta ariza</span>` : ''}${c.unchecked ? `<span class="tag r">📝 ${c.unchecked} ta tekshirilmagan</span>` : ''}
-        <button class="btn" data-o="${c.id}">Ochish →</button></div>`).join('') || '<p class="muted">Kurs yo‘q</p>'}</div>`;
-    $('#nc').onclick = () => courseForm(null);
+        <button class="btn" data-o="${c.id}">Ochish →</button></div>`;
+    const groups = olys.map((o) => ({ o, cs: list.filter((c) => c.olympiad_id === o.id) }));
+    const loose = list.filter((c) => !olys.some((o) => o.id === c.olympiad_id));
+    M.innerHTML = `<div class="card"><div class="row"><h2 style="margin:0">🎓 Olimpiadaga tayyorlov</h2><button class="btn o" id="no" style="flex:none">➕ Yangi olimpiada</button></div>
+      <p class="muted">Har bir olimpiada ichida sinflar bo‘yicha kurslar bo‘ladi. Har bir kursda: darslar jadvali, jonli dars, video yechimlar, materiallar, uyga vazifalar va ularni tekshirish, jurnal.</p></div>
+      ${groups.map(({ o, cs }) => `<div class="card"><div class="row"><h2 style="margin:0">${esc(o.icon)} ${esc(o.name)} ${o.published ? '' : '<span class="tag r">Yashirin</span>'}</h2>
+        <button class="btn w" data-eo="${o.id}" style="flex:none">⚙️ Sozlash</button><button class="btn g" data-nc="${o.id}" style="flex:none">➕ Kurs qo‘shish</button></div>
+        ${o.description ? `<p class="muted">${esc(o.description)}</p>` : ''}${cs.map(card).join('') || '<p class="muted">Hali kurs yo‘q. “Kurs qo‘shish” tugmasini bosing (masalan: 7-sinf).</p>'}</div>`).join('')}
+      ${loose.length ? `<div class="card"><h2 style="margin:0">Olimpiadaga biriktirilmagan kurslar</h2>${loose.map(card).join('')}</div>` : ''}`;
+    $('#no').onclick = () => olympiadForm(null);
+    M.querySelectorAll('[data-eo]').forEach((b) => (b.onclick = () => olympiadForm(olys.find((o) => o.id === +b.dataset.eo))));
+    M.querySelectorAll('[data-nc]').forEach((b) => (b.onclick = () => courseForm(null, null, +b.dataset.nc)));
     M.querySelectorAll('[data-o]').forEach((b) => (b.onclick = () => { SUBTAB = 'lessons'; course(+b.dataset.o); }));
   }
 
@@ -130,9 +138,24 @@
 
   function settings(d) { courseForm(d.course, CV()); }
 
-  function courseForm(c, into) {
-    c = c || { title: '', grade: 7, description: '', live_url: '', published: 1, open_join: 0, sort: 0 };
+  function olympiadForm(o) {
+    o = o || { name: '', description: '', icon: '🏆', published: 1, sort: 0 };
+    M.innerHTML = `<div class="card"><div class="row"><button class="btn w" id="bk" style="flex:none">← Orqaga</button><h2 style="margin:0">${o.id ? '⚙️ Olimpiada sozlamalari' : '➕ Yangi olimpiada'}</h2></div>
+      <div class="row"><label class="f" style="flex:none;width:90px"><span>Belgi</span><input id="oi" value="${esc(o.icon)}" maxlength="8"></label><label class="f"><span>Nomi</span><input id="on" value="${esc(o.name)}" placeholder="Masalan: Respublika fan olimpiadasi"></label><label class="f" style="flex:none;width:130px"><span>Tartib raqami</span><input id="os" type="number" value="${o.sort || ''}" placeholder="oxirida"></label></div>
+      <label class="f"><span>Tavsif (o‘quvchilar ko‘radi)</span><textarea id="od">${esc(o.description)}</textarea></label>
+      <label style="display:flex;gap:10px;align-items:center;font-weight:800;margin:8px 0"><input type="checkbox" id="op" style="width:22px;height:22px" ${o.published ? 'checked' : ''}> Saytda ko‘rinsin</label>
+      <div id="oe"></div><div class="row"><button class="btn g" id="osv" style="flex:none">💾 Saqlash</button>${o.id ? '<button class="btn r" id="odl" style="flex:none">🗑️ O‘chirish</button>' : ''}</div></div>`;
+    $('#bk').onclick = kurs;
+    $('#osv').onclick = async () => { const b = { icon: $('#oi').value, name: $('#on').value, sort: +$('#os').value, description: $('#od').value, published: $('#op').checked };
+      try { if (o.id) await api('PUT', '/teach/olympiads/' + o.id, b); else await api('POST', '/teach/olympiads', b); toast('Saqlandi ✅'); kurs(); } catch (e) { $('#oe').innerHTML = `<div class="err">${esc(e.message)}</div>`; } };
+    if ($('#odl')) $('#odl').onclick = async () => { try { await api('DELETE', '/teach/olympiads/' + o.id); toast('O‘chirildi'); kurs(); } catch (e) { $('#oe').innerHTML = `<div class="err">${esc(e.message)}</div>`; } };
+  }
+
+  async function courseForm(c, into, oid) {
+    const olys = await api('GET', '/teach/olympiads');
+    c = c || { title: '', grade: 7, description: '', live_url: '', published: 1, open_join: 0, sort: 0, olympiad_id: oid || (olys[0] && olys[0].id) };
     const html = `<div class="card"><h3>${c.id ? '⚙️ Kurs sozlamalari' : '➕ Yangi kurs'}</h3>
+      <label class="f"><span>Olimpiada</span><select id="co2">${olys.map((o) => `<option value="${o.id}" ${c.olympiad_id === o.id ? 'selected' : ''}>${esc(o.icon)} ${esc(o.name)}</option>`).join('')}<option value="" ${c.olympiad_id ? '' : 'selected'}>— biriktirilmagan —</option></select></label>
       <div class="row"><label class="f"><span>Kurs nomi</span><input id="ct" value="${esc(c.title)}" placeholder="Al-Xorazmiy olimpiadasi — 7-sinf"></label><label class="f" style="flex:none;width:110px"><span>Sinf</span><input id="cg" type="number" min="1" max="11" value="${c.grade}"></label><label class="f" style="flex:none;width:110px"><span>Tartib</span><input id="cs" type="number" value="${c.sort || 0}"></label></div>
       <label class="f"><span>Tavsif</span><textarea id="cd">${esc(c.description)}</textarea></label>
       <label class="f"><span>Doimiy jonli dars havolasi (har bir darsda alohida ko‘rsatilmasa shu ishlatiladi)</span><div class="row"><input id="cl" value="${esc(c.live_url)}" placeholder="https://meet.jit.si/... yoki Zoom / Google Meet havolasi"><button class="btn o" id="cj" type="button" style="flex:none">🎥 Jitsi xona yaratish</button></div></label>
@@ -143,7 +166,7 @@
     $('#cj').onclick = () => ($('#cl').value = A.newJitsi());
     if ($('#cx')) $('#cx').onclick = kurs;
     $('#csv2').onclick = async () => {
-      const b = { title: $('#ct').value, grade: +$('#cg').value, sort: +$('#cs').value, description: $('#cd').value, live_url: $('#cl').value.trim(), open_join: $('#co').checked, published: $('#cp').checked };
+      const b = { olympiad_id: +$('#co2').value || null, title: $('#ct').value, grade: +$('#cg').value, sort: +$('#cs').value, description: $('#cd').value, live_url: $('#cl').value.trim(), open_join: $('#co').checked, published: $('#cp').checked };
       try { if (c.id) { await api('PUT', '/teach/courses/' + c.id, b); toast('Saqlandi ✅'); course(c.id); } else { const j = await api('POST', '/teach/courses', b); course(j.id, 'lessons'); } }
       catch (e) { $('#ce').innerHTML = `<div class="err">${esc(e.message)}</div>`; }
     };

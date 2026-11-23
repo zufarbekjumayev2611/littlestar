@@ -24,9 +24,9 @@ window.OLYMP = function (X) {
   .ol-ann{background:#fff6d6;border-radius:16px;padding:12px 14px;margin:8px 0}`;
   document.head.appendChild(css);
 
-  const state = { course: null, lesson: null };
-  // To‘g‘ridan-to‘g‘ri havola: #olymp-c3 (kurs) yoki #olymp-l12 (dars) — Telegram’da ulashish va sahifa yangilanganda joyida qolish uchun
-  let deep = /^#olymp-([cl])(\d+)$/.exec(location.hash);
+  const state = { olympiad: null, course: null, lesson: null };
+  // To‘g‘ridan-to‘g‘ri havola: #olymp-o1 (olimpiada), #olymp-c3 (kurs) yoki #olymp-l12 (dars) — Telegram’da ulashish va sahifa yangilanganda joyida qolish uchun
+  let deep = /^#olymp-([ocl])(\d+)$/.exec(location.hash);
   const setHash = (h) => { try { history.replaceState(null, '', '#olymp' + h); } catch (e) {} };
   const nowS = () => Date.now() / 1000;
   const ST = { submitted: ['tag', '🕓 Tekshirilmoqda'], checked: ['tag g', '✅ Tekshirildi'], returned: ['tag', '↩️ Qayta ishlang'] };
@@ -40,27 +40,49 @@ window.OLYMP = function (X) {
     app.querySelectorAll('[data-join]').forEach((a) => a.addEventListener('click', () => { X.api('POST', `/academy/lessons/${a.dataset.join}/join`, { child: X.child().id }).catch(() => {}); }));
   }
 
-  /* ---------- kurslar ---------- */
+  const BG = ['linear-gradient(135deg,#3d8bff,#5fb0ff)', 'linear-gradient(135deg,#8e5cff,#b07bff)', 'linear-gradient(135deg,#1fa36b,#3fd6a8)', 'linear-gradient(135deg,#ff5c8a,#ff8f6b)', 'linear-gradient(135deg,#ff9f1c,#ffc145)'];
+
+  /* ---------- olimpiadalar ro‘yxati ---------- */
   async function view() {
     if (state.lesson) return lesson(state.lesson);
     if (state.course) return course(state.course);
+    if (state.olympiad) return olympiad(state.olympiad);
     setHash('');
     X.loading();
     try { await X.loadMe(); } catch (e) { app.innerHTML = X.errBox(e); return; }
     const ME = X.me();
-    const hero = `<div class="ol-hero"><h2>🎓 Olimpiadaga tayyorlov</h2><p style="margin:0;font-weight:800">Al-Xorazmiy olimpiadasi (7–8-sinflar): jonli onlayn darslar, video yechimlar, uyga vazifalar va ularni o‘qituvchi tekshiradi.</p></div>`;
+    const hero = `<div class="ol-hero"><h2>🎓 Olimpiadaga tayyorlov</h2><p style="margin:0;font-weight:800">Jonli onlayn darslar, video yechimlar, uyga vazifalar — ularni o‘qituvchi tekshiradi. Olimpiadani tanlang 👇</p></div>`;
     if (!ME) { app.innerHTML = hero + `<div class="card"><p class="muted" style="margin-top:0">Kursga yozilish uchun akkauntga kiring yoki ro‘yxatdan o‘ting.</p><button class="go" id="lg">👤 Kirish / Ro‘yxatdan o‘tish</button></div>`; $('#lg').onclick = () => X.go('profile', true); return; }
-    if (deep) { const [, k, n] = deep; deep = null; return k === 'l' ? lesson(+n) : course(+n); }
+    if (deep) { const [, k, n] = deep; deep = null; return k === 'l' ? lesson(+n) : k === 'c' ? course(+n) : olympiad(+n); }
     if (!ME.children.length) { app.innerHTML = hero + `<div class="card"><p class="muted" style="margin-top:0">Avval o‘quvchi profilini qo‘shing (ism-familiya, sinf, viloyat).</p><button class="go" id="ak">➕ O‘quvchi qo‘shish</button></div>`; $('#ak').onclick = () => X.childForm(null, view); return; }
-    let list; try { list = await X.api('GET', '/academy/courses?child=' + X.child().id); } catch (e) { app.innerHTML = X.errBox(e); return; }
-    const bg = ['linear-gradient(135deg,#3d8bff,#5fb0ff)', 'linear-gradient(135deg,#8e5cff,#b07bff)', 'linear-gradient(135deg,#1fa36b,#3fd6a8)', 'linear-gradient(135deg,#ff5c8a,#ff8f6b)'];
+    let olys; try { olys = await X.api('GET', '/academy/olympiads?child=' + X.child().id); } catch (e) { app.innerHTML = X.errBox(e); return; }
+    const gr = (g) => (g.length ? (g.length > 1 ? `${g[0]}–${g[g.length - 1]}` : g[0]) + '-sinflar uchun' : 'Kurslar tez orada');
     app.innerHTML = hero + `<div class="card"><h3>Kim o‘qiydi?</h3>${X.kidsBar()}</div>
+      <div class="sgrid">${olys.map((o, i) => `<button class="scard" data-o="${o.id}" style="background:${BG[i % BG.length]}">${o.mine ? '<span class="lock">✅ Siz qatnashyapsiz</span>' : ''}
+        <span class="ic">${esc(o.icon)}</span><b>${esc(o.name)}</b><small>${esc(o.description)}</small><small>🎓 ${gr([...new Set(o.grades)])}</small>
+        <small style="margin-top:10px;font-weight:900;font-size:16px">Ochish →</small></button>`).join('')}
+        <div class="scard" style="background:rgba(255,255,255,.12);box-shadow:none;border:3px dashed rgba(255,255,255,.35)"><span class="ic">🔜</span><b>Boshqa olimpiadalar</b><small>Tez orada yangi olimpiadalarga tayyorlov kurslari qo‘shiladi.</small></div></div>`;
+    X.bindKids(view);
+    app.querySelectorAll('[data-o]').forEach((b) => (b.onclick = () => olympiad(+b.dataset.o)));
+  }
+
+  /* ---------- olimpiada ichidagi kurslar (sinflar) ---------- */
+  async function olympiad(oid) {
+    state.olympiad = oid; state.course = null; state.lesson = null; setHash('-o' + oid); X.loading();
+    let olys, list;
+    try { [olys, list] = await Promise.all([X.api('GET', '/academy/olympiads?child=' + X.child().id), X.api('GET', `/academy/courses?child=${X.child().id}&olympiad=${oid}`)]); } catch (e) { app.innerHTML = X.errBox(e); return; }
+    const o = olys.find((x) => x.id === oid); if (!o) { state.olympiad = null; return view(); }
+    const bg = BG;
+    app.innerHTML = `<div class="bar-top"><button class="back" id="bk">← Olimpiadalar</button><div class="ttl">${esc(o.icon)} ${esc(o.name)}</div></div>
+      <div class="ol-hero"><h2>${esc(o.icon)} ${esc(o.name)}</h2><p style="margin:0;font-weight:800">${esc(o.description)}</p></div>
+      <div class="card"><h3>Kim o‘qiydi?</h3>${X.kidsBar()}</div>
       <div class="sgrid">${list.map((c, i) => `<button class="scard" data-c="${c.id}" style="background:${bg[i % bg.length]}">
         ${c.status === 'active' ? '<span class="lock">✅ Siz kursdasiz</span>' : c.status === 'pending' ? '<span class="lock">⏳ Ariza yuborilgan</span>' : ''}
         <span class="ic">${c.grade >= 7 ? '🧮' : '⭐'}</span><b>${esc(c.title)}</b><small>${esc(c.description)}</small>
         <small>📅 ${c.lessons} ta dars${c.next ? ` · keyingisi: ${A.fmtDay(c.next.starts_at)}` : ''}</small>
-        <small style="margin-top:10px;font-weight:900;font-size:16px">${c.status === 'active' ? '▶️ Kursga kirish' : c.status === 'pending' ? 'O‘qituvchi tasdiqlashini kuting' : c.status === 'removed' ? 'O‘qituvchiga murojaat qiling' : '➕ Kursga yozilish'}</small></button>`).join('') || '<div class="card"><p class="muted">Hozircha kurs yo‘q.</p></div>'}</div>`;
-    X.bindKids(view);
+        <small style="margin-top:10px;font-weight:900;font-size:16px">${c.status === 'active' ? '▶️ Kursga kirish' : c.status === 'pending' ? 'O‘qituvchi tasdiqlashini kuting' : c.status === 'removed' ? 'O‘qituvchiga murojaat qiling' : '➕ Kursga yozilish'}</small></button>`).join('') || '<div class="card"><p class="muted">Bu olimpiada uchun kurslar tez orada ochiladi.</p></div>'}</div>`;
+    $('#bk').onclick = () => { state.olympiad = null; view(); };
+    X.bindKids(() => olympiad(oid));
     app.querySelectorAll('[data-c]').forEach((b) => (b.onclick = async () => {
       const c = list.find((x) => x.id === +b.dataset.c);
       if (c.status === 'active') { state.course = c.id; return course(c.id); }
@@ -69,7 +91,7 @@ window.OLYMP = function (X) {
       const ch = X.child();
       const m = X.modal(`<h3>${esc(c.title)}</h3><p class="muted">👦 ${esc(ch.name)} (${ch.grade}-sinf) uchun kursga yozilish arizasi yuborilsinmi?</p><div class="btns"><button class="btn w" id="n">Bekor</button><button class="btn g" id="y">📨 Ariza yuborish</button></div>`);
       m.querySelector('#n').onclick = () => m.remove();
-      m.querySelector('#y').onclick = async () => { try { const r = await X.api('POST', `/academy/courses/${c.id}/join`, { child: ch.id }); m.remove(); if (r.status === 'active') { state.course = c.id; course(c.id); } else { info('✅ Ariza yuborildi', 'O‘qituvchi tasdiqlagach, kurs ochiladi.'); view(); } } catch (e) { m.querySelector('.btns').insertAdjacentHTML('beforebegin', `<div class="err">${esc(e.message)}</div>`); } };
+      m.querySelector('#y').onclick = async () => { try { const r = await X.api('POST', `/academy/courses/${c.id}/join`, { child: ch.id }); m.remove(); if (r.status === 'active') { state.course = c.id; course(c.id); } else { info('✅ Ariza yuborildi', 'O‘qituvchi tasdiqlagach, kurs ochiladi.'); olympiad(oid); } } catch (e) { m.querySelector('.btns').insertAdjacentHTML('beforebegin', `<div class="err">${esc(e.message)}</div>`); } };
     }));
   }
   function info(t, msg) { const m = X.modal(`<h3>${t}</h3><p class="muted">${msg}</p><div class="btns"><button class="btn" id="ok">Tushunarli</button></div>`); m.querySelector('#ok').onclick = () => m.remove(); }
@@ -79,11 +101,12 @@ window.OLYMP = function (X) {
     state.course = id; state.lesson = null; setHash('-c' + id); X.loading();
     let d; try { d = await X.api('GET', `/academy/courses/${id}?child=${X.child().id}`); } catch (e) { app.innerHTML = X.errBox(e); return; }
     if (d.status !== 'active') { state.course = null; return view(); }
+    state.olympiad = d.course.olympiad_id || null;
     const t = nowS();
     const live = d.lessons.find((l) => A.liveState(l, t) === 'live');
     const next = d.lessons.find((l) => A.liveState(l, t) === 'soon');
     const todo = d.lessons.filter((l) => l.has_hw && (!l.sub || l.sub.status === 'returned') && (!l.hw_due || l.hw_due > t - 7 * 86400));
-    app.innerHTML = `<div class="bar-top"><button class="back" id="bk">← Kurslar</button><div class="ttl">🎓 ${esc(d.course.title)}</div></div>
+    app.innerHTML = `<div class="bar-top"><button class="back" id="bk">← ${esc(d.course.olympiad || 'Olimpiadalar')}</button><div class="ttl">🎓 ${esc(d.course.title)}</div></div>
       ${live ? `<div class="ol-live"><span class="ol-dot"></span><b>Dars hozir: ${esc(live.title)}</b><button class="ol-join" data-l="${live.id}">Darsga o‘tish →</button></div>` : next ? `<div class="card" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div style="flex:1"><h3 style="margin:0">⏰ Keyingi dars</h3><p class="muted" style="margin:4px 0 0">${esc(next.title)} — <b>${A.fmtDay(next.starts_at)}</b></p></div><button class="btn" data-l="${next.id}">Ochish</button></div>` : ''}
       <div class="card"><div class="kids">${X.kidsBar()}</div></div>
       ${d.announcements.length ? `<div class="card"><h3>📢 E’lonlar</h3>${d.announcements.slice(0, 3).map((a) => `<div class="ol-ann"><div class="muted" style="font-size:13px">${A.fmtDT(a.created_at)}</div>${A.rich(a.text)}</div>`).join('')}</div>` : ''}
@@ -158,5 +181,5 @@ window.OLYMP = function (X) {
     A.math(app);
   }
 
-  return { olymp: () => { state.course = null; state.lesson = null; view(); } };
+  return { olymp: () => { state.olympiad = null; state.course = null; state.lesson = null; view(); } };
 };

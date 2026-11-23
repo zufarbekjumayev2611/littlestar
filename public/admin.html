@@ -76,7 +76,7 @@ function login(msg){$('#tabs').innerHTML='';
   $('#lf').onsubmit=async e=>{e.preventDefault();try{const j=await api('POST','/auth/login',{phone:$('#ph').value,password:$('#pw').value});if(!['admin','teacher'].includes(j.account.role))throw new Error('Bu akkaunt admin yoki o‘qituvchi emas');token=j.token;localStorage.setItem('ls_token',JSON.stringify(token));start()}catch(err){$('#le').innerHTML=`<div class="err">${esc(err.message)}</div>`}}}
 async function start(){if(!token)return login();
   let role;try{const me=await api('GET','/me');role=me.account.role;if(!['admin','teacher'].includes(role))return login('Bu akkaunt admin yoki o‘qituvchi emas')}catch(e){return login(e.status===401?'':e.message)}
-  const T=role==='admin'?[['dash','📊 Boshqaruv'],['kurs','🎓 Olimpiada kurslari'],['tests','📝 Testlar'],['users','👥 Foydalanuvchilar'],['site','🌐 Saytga o‘tish']]:[['kurs','🎓 Olimpiada kurslari'],['site','🌐 Saytga o‘tish']];
+  const T=role==='admin'?[['dash','📊 Boshqaruv'],['kurs','🎓 Olimpiadaga tayyorlov'],['tests','📝 Testlar'],['users','👥 Foydalanuvchilar'],['site','🌐 Saytga o‘tish']]:[['kurs','🎓 Olimpiadaga tayyorlov'],['site','🌐 Saytga o‘tish']];
   $('#tabs').innerHTML=T.map(([k,t])=>`<button data-t="${k}">${t}</button>`).join('');
   $('#tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>tab(b.dataset.t));tab(T[0][0])}
 function tab(k){if(k==='site'){location.href='/';return}$('#tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.t===k));({dash,tests,users,kurs:window.kurs})[k]()}

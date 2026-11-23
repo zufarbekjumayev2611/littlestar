@@ -49,10 +49,23 @@ module.exports = function academy({ db, route, HttpError, bad, str, now, DATA_DI
     text TEXT NOT NULL, created_at INTEGER NOT NULL);
   `);
 
+  // Olimpiadalar (yo‘nalishlar): har biri ichida sinflar bo‘yicha kurslar bo‘ladi
+  db.exec(`CREATE TABLE IF NOT EXISTS olympiads(
+    id INTEGER PRIMARY KEY, name TEXT NOT NULL, description TEXT DEFAULT '', icon TEXT DEFAULT '🏆',
+    published INTEGER NOT NULL DEFAULT 1, sort INTEGER DEFAULT 0, created_at INTEGER NOT NULL);`);
+  if (!db.prepare("PRAGMA table_info(courses)").all().some((c) => c.name === "olympiad_id"))
+    db.exec("ALTER TABLE courses ADD COLUMN olympiad_id INTEGER");
+  if (db.prepare("SELECT COUNT(*) n FROM olympiads").get().n === 0) {
+    const r = db.prepare("INSERT INTO olympiads(name,description,icon,sort,created_at) VALUES(?,?,?,?,?)").run(
+      "Al-Xorazmiy olimpiadasi", "Al-Xorazmiy nomidagi matematika olimpiadasiga tayyorlov: 7- va 8-sinflar uchun jonli onlayn darslar, video yechimlar, uyga vazifalar.", "🧮", 1, now());
+    db.prepare("UPDATE courses SET olympiad_id=? WHERE olympiad_id IS NULL").run(Number(r.lastInsertRowid));
+  }
+  const firstOlympiad = () => (db.prepare("SELECT id FROM olympiads ORDER BY sort,id LIMIT 1").get() || {}).id || null;
+
   if (db.prepare("SELECT COUNT(*) n FROM courses").get().n === 0) {
-    const ins = db.prepare("INSERT INTO courses(title,grade,description,sort,created_at) VALUES(?,?,?,?,?)");
-    ins.run("Al-Xorazmiy olimpiadasi — 7-sinf", 7, "Al-Xorazmiy nomidagi matematika olimpiadasiga tayyorlov kursi. Jonli onlayn darslar, video yechimlar va uyga vazifalar.", 1, now());
-    ins.run("Al-Xorazmiy olimpiadasi — 8-sinf", 8, "Al-Xorazmiy nomidagi matematika olimpiadasiga tayyorlov kursi. Jonli onlayn darslar, video yechimlar va uyga vazifalar.", 2, now());
+    const ins = db.prepare("INSERT INTO courses(title,grade,description,sort,created_at,olympiad_id) VALUES(?,?,?,?,?,?)");
+    ins.run("Al-Xorazmiy olimpiadasi — 7-sinf", 7, "Al-Xorazmiy nomidagi matematika olimpiadasiga tayyorlov kursi. Jonli onlayn darslar, video yechimlar va uyga vazifalar.", 1, now(), firstOlympiad());
+    ins.run("Al-Xorazmiy olimpiadasi — 8-sinf", 8, "Al-Xorazmiy nomidagi matematika olimpiadasiga tayyorlov kursi. Jonli onlayn darslar, video yechimlar va uyga vazifalar.", 2, now(), firstOlympiad());
   }
 
   /* ---------------- yordamchilar ---------------- */
@@ -166,9 +179,20 @@ module.exports = function academy({ db, route, HttpError, bad, str, now, DATA_DI
   }
 
   /* ================= O‘QUVCHI ================= */
+  route("GET", "/api/academy/olympiads", ({ account, query }) => {
+    const child = query.child ? ownChild(account, query.child) : null;
+    return db.prepare("SELECT id,name,description,icon FROM olympiads WHERE published=1 ORDER BY sort,id").all().map((o) => ({
+      ...o,
+      courses: db.prepare("SELECT COUNT(*) n FROM courses WHERE olympiad_id=? AND published=1").get(o.id).n,
+      grades: db.prepare("SELECT grade FROM courses WHERE olympiad_id=? AND published=1 ORDER BY grade").all(o.id).map((r) => r.grade),
+      mine: child ? db.prepare("SELECT COUNT(*) n FROM enrollments e JOIN courses c ON c.id=e.course_id WHERE c.olympiad_id=? AND e.child_id=? AND e.status='active'").get(o.id, child.id).n : 0,
+    }));
+  }, { auth: true });
+
   route("GET", "/api/academy/courses", ({ account, query }) => {
     const child = query.child ? ownChild(account, query.child) : null;
-    return db.prepare("SELECT id,title,grade,description,open_join FROM courses WHERE published=1 ORDER BY sort,id").all().map((c) => ({
+    const oid = +query.olympiad || 0;
+    return db.prepare("SELECT id,title,grade,description,open_join,olympiad_id FROM courses WHERE published=1 AND (?=0 OR olympiad_id=?) ORDER BY sort,id").all(oid, oid).map((c) => ({
       ...c,
       lessons: db.prepare("SELECT COUNT(*) n FROM lessons WHERE course_id=? AND published=1").get(c.id).n,
       next: db.prepare("SELECT id,title,starts_at FROM lessons WHERE course_id=? AND published=1 AND starts_at>? ORDER BY starts_at LIMIT 1").get(c.id, now() - 3 * 3600) || null,
@@ -186,7 +210,7 @@ module.exports = function academy({ db, route, HttpError, bad, str, now, DATA_DI
   }, { auth: true });
 
   route("GET", "/api/academy/courses/:id", ({ account, params, query }) => {
-    const c = db.prepare("SELECT id,title,grade,description,live_url FROM courses WHERE id=? AND published=1").get(+params.id); if (!c) throw new HttpError(404, "Kurs topilmadi");
+    const c = db.prepare("SELECT c.id,c.title,c.grade,c.description,c.live_url,c.olympiad_id,o.name olympiad FROM courses c LEFT JOIN olympiads o ON o.id=c.olympiad_id WHERE c.id=? AND c.published=1").get(+params.id); if (!c) throw new HttpError(404, "Kurs topilmadi");
     const child = ownChild(account, query.child);
     const e = enrollment(c.id, child.id);
     if (!isTeacher(account) && (!e || e.status !== "active")) return { course: { id: c.id, title: c.title, description: c.description }, status: e ? e.status : null };
@@ -196,7 +220,7 @@ module.exports = function academy({ db, route, HttpError, bad, str, now, DATA_DI
         return { id: l.id, title: l.title, starts_at: l.starts_at, duration_min: l.duration_min, has_hw: !!l.hw_text || !!db.prepare("SELECT 1 FROM lesson_items WHERE lesson_id=? AND kind='homework'").get(l.id), hw_due: l.hw_due, hw_max: l.hw_max, videos: l.videos, sub: s || null };
       });
     const ann = db.prepare("SELECT id,text,created_at FROM announcements WHERE course_id=? ORDER BY id DESC LIMIT 20").all(c.id);
-    return { course: { id: c.id, title: c.title, description: c.description, grade: c.grade, has_live: !!c.live_url }, status: "active", lessons, announcements: ann, server_time: now() };
+    return { course: { id: c.id, title: c.title, description: c.description, grade: c.grade, has_live: !!c.live_url, olympiad_id: c.olympiad_id, olympiad: c.olympiad }, status: "active", lessons, announcements: ann, server_time: now() };
   }, { auth: true });
 
   route("GET", "/api/academy/lessons/:id", ({ account, params, query }) => {
@@ -239,6 +263,27 @@ module.exports = function academy({ db, route, HttpError, bad, str, now, DATA_DI
   const TCH = { auth: true, teacher: true };
   const n = (sql, ...a) => db.prepare(sql).get(...a).n;
 
+  route("GET", "/api/teach/olympiads", () => db.prepare("SELECT o.*, (SELECT COUNT(*) FROM courses c WHERE c.olympiad_id=o.id) courses FROM olympiads o ORDER BY sort,id").all(), TCH);
+  function olympiadInput(b) {
+    const name = str(b.name, 150); if (!name) bad("Olimpiada nomini yozing");
+    return { name, description: str(b.description, 3000), icon: str(b.icon, 8) || "🏆", published: b.published ? 1 : 0, sort: +b.sort || 0 };
+  }
+  route("POST", "/api/teach/olympiads", ({ body }) => {
+    const o = olympiadInput(body);
+    if (!o.sort) o.sort = (db.prepare("SELECT MAX(sort) m FROM olympiads").get().m || 0) + 1; // yangi olimpiada ro‘yxat oxiriga
+    const r = db.prepare("INSERT INTO olympiads(name,description,icon,published,sort,created_at) VALUES(?,?,?,?,?,?)").run(o.name, o.description, o.icon, o.published, o.sort, now());
+    return { id: Number(r.lastInsertRowid) };
+  }, TCH);
+  route("PUT", "/api/teach/olympiads/:id", ({ body, params }) => {
+    const o = olympiadInput(body);
+    db.prepare("UPDATE olympiads SET name=?,description=?,icon=?,published=?,sort=? WHERE id=?").run(o.name, o.description, o.icon, o.published, o.sort, +params.id);
+    return { ok: true };
+  }, TCH);
+  route("DELETE", "/api/teach/olympiads/:id", ({ params }) => {
+    if (n("SELECT COUNT(*) n FROM courses WHERE olympiad_id=?", +params.id)) bad("Avval bu olimpiadadagi kurslarni o‘chiring yoki boshqa olimpiadaga o‘tkazing");
+    db.prepare("DELETE FROM olympiads WHERE id=?").run(+params.id); return { ok: true };
+  }, { auth: true, admin: true });
+
   route("GET", "/api/teach/courses", () => db.prepare("SELECT * FROM courses ORDER BY sort,id").all().map((c) => ({
     ...c,
     students: n("SELECT COUNT(*) n FROM enrollments WHERE course_id=? AND status='active'", c.id),
@@ -249,16 +294,18 @@ module.exports = function academy({ db, route, HttpError, bad, str, now, DATA_DI
 
   function courseInput(b) {
     const title = str(b.title, 150); if (!title) bad("Kurs nomini yozing");
-    return { title, grade: Math.max(1, Math.min(11, +b.grade || 7)), description: str(b.description, 3000), live_url: cleanUrl(b.live_url), published: b.published ? 1 : 0, open_join: b.open_join ? 1 : 0, sort: +b.sort || 0 };
+    const olympiad_id = +b.olympiad_id || null;
+    if (olympiad_id && !db.prepare("SELECT 1 FROM olympiads WHERE id=?").get(olympiad_id)) bad("Olimpiadani tanlang");
+    return { title, olympiad_id, grade: Math.max(1, Math.min(11, +b.grade || 7)), description: str(b.description, 3000), live_url: cleanUrl(b.live_url), published: b.published ? 1 : 0, open_join: b.open_join ? 1 : 0, sort: +b.sort || 0 };
   }
   route("POST", "/api/teach/courses", ({ body }) => {
     const c = courseInput(body);
-    const r = db.prepare("INSERT INTO courses(title,grade,description,live_url,published,open_join,sort,created_at) VALUES(?,?,?,?,?,?,?,?)").run(c.title, c.grade, c.description, c.live_url, c.published, c.open_join, c.sort, now());
+    const r = db.prepare("INSERT INTO courses(title,grade,description,live_url,published,open_join,sort,created_at,olympiad_id) VALUES(?,?,?,?,?,?,?,?,?)").run(c.title, c.grade, c.description, c.live_url, c.published, c.open_join, c.sort, now(), c.olympiad_id);
     return { id: Number(r.lastInsertRowid) };
   }, TCH);
   route("PUT", "/api/teach/courses/:id", ({ body, params }) => {
     const c = courseInput(body);
-    db.prepare("UPDATE courses SET title=?,grade=?,description=?,live_url=?,published=?,open_join=?,sort=? WHERE id=?").run(c.title, c.grade, c.description, c.live_url, c.published, c.open_join, c.sort, +params.id);
+    db.prepare("UPDATE courses SET title=?,grade=?,description=?,live_url=?,published=?,open_join=?,sort=?,olympiad_id=? WHERE id=?").run(c.title, c.grade, c.description, c.live_url, c.published, c.open_join, c.sort, c.olympiad_id, +params.id);
     return { ok: true };
   }, TCH);
   route("DELETE", "/api/teach/courses/:id", ({ params }) => { db.prepare("DELETE FROM courses WHERE id=?").run(+params.id); return { ok: true }; }, { auth: true, admin: true });
