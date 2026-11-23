@@ -23,13 +23,17 @@
   document.head.appendChild(css);
 
   let CUR = null; // joriy kurs
+  const gradeLabel = (c) => (c.grade_to && c.grade_to !== c.grade ? `${c.grade}–${c.grade_to}` : c.grade) + '-sinf';
+  const sum = (n) => String(n || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' so‘m';
+  const priceLabel = (c) => (c.price > 0 ? `${sum(c.price)} / ${c.access_days > 0 ? c.access_days + ' kun' : 'butun kurs'}` : 'Bepul');
+  const DAY = 86400;
   let SUBTAB = 'lessons';
 
   /* ---------- kurslar ro‘yxati ---------- */
   async function kurs() {
     M.innerHTML = '<p class="muted">Yuklanmoqda...</p>';
     const [list, olys] = await Promise.all([api('GET', '/teach/courses'), api('GET', '/teach/olympiads')]);
-    const card = (c) => `<div class="ccard"><div class="t"><b>${esc(c.title)}</b> ${c.published ? '' : '<span class="tag r">Yashirin</span>'}<div class="muted">${c.grade}-sinf · ${c.lessons} ta dars · ${c.students} o‘quvchi</div></div>
+    const card = (c) => `<div class="ccard"><div class="t"><b>${esc(c.title)}</b> ${c.published ? '' : '<span class="tag r">Yashirin</span>'}<div class="muted">${gradeLabel(c)} · ${c.lessons} ta dars · ${c.students} o‘quvchi · ${c.price > 0 ? '💳 ' + priceLabel(c) : '🎁 Bepul'}</div></div>
         ${c.pending ? `<span class="tag r">🙋 ${c.pending} ta ariza</span>` : ''}${c.unchecked ? `<span class="tag r">📝 ${c.unchecked} ta tekshirilmagan</span>` : ''}
         <button class="btn" data-o="${c.id}">Ochish →</button></div>`;
     const groups = olys.map((o) => ({ o, cs: list.filter((c) => c.olympiad_id === o.id) }));
@@ -53,12 +57,12 @@
     const d = (CUR = await api('GET', '/teach/courses/' + id));
     const pend = d.students.filter((s) => s.status === 'pending').length;
     const unch = d.lessons.reduce((a, l) => a + l.unchecked, 0);
-    const T = [['lessons', '📅 Darslar'], ['students', '👥 O‘quvchilar' + (pend ? `<span class="badge">${pend}</span>` : '')], ['hw', '📝 Vazifalarni tekshirish' + (unch ? `<span class="badge">${unch}</span>` : '')], ['journal', '📊 Jurnal'], ['ann', '📢 E’lonlar'], ['settings', '⚙️ Sozlamalar']];
+    const T = [['lessons', '📅 Darslar'], ['students', '👥 O‘quvchilar' + (pend ? `<span class="badge">${pend}</span>` : '')], ['hw', '📝 Vazifalarni tekshirish' + (unch ? `<span class="badge">${unch}</span>` : '')], ['journal', '📊 Jurnal'], ['ann', '📢 E’lonlar'], ['pay', '💳 To‘lovlar'], ['settings', '⚙️ Sozlamalar']];
     M.innerHTML = `<div class="card"><div class="row"><button class="btn w" id="bk" style="flex:none">← Kurslar</button><h2 style="margin:0">${esc(d.course.title)}</h2></div>
       <div class="subtabs">${T.map(([k, t]) => `<button data-s="${k}" class="${SUBTAB === k ? 'on' : ''}">${t}</button>`).join('')}</div></div><div id="cv"></div>`;
     $('#bk').onclick = kurs;
     M.querySelectorAll('[data-s]').forEach((b) => (b.onclick = () => { SUBTAB = b.dataset.s; course(id); }));
-    ({ lessons, students, hw, journal, ann, settings })[SUBTAB](d);
+    ({ lessons, students, hw, journal, ann, pay, settings })[SUBTAB](d);
   }
   const CV = () => $('#cv');
 
@@ -78,17 +82,21 @@
 
   function students(d) {
     const by = (s) => d.students.filter((x) => x.status === s);
-    const row = (s, btns) => `<tr><td><b>${esc(s.name)}</b> <span class="tag">${s.grade}-sinf</span><br><span class="muted">${esc(s.region)}${s.district ? ', ' + esc(s.district) : ''}${s.school ? ' · ' + esc(s.school) : ''}</span></td><td>+${esc(s.phone)}<br><span class="muted">${esc(s.parent_name || '')}</span></td><td>${btns}</td></tr>`;
+    const row = (s, btns) => `<tr><td><b>${esc(s.name)}</b> <span class="tag">${s.grade}-sinf</span><br><span class="muted">${esc(s.region)}${s.district ? ', ' + esc(s.district) : ''}${s.school ? ' · ' + esc(s.school) : ''}</span></td><td>+${esc(s.phone)}<br><span class="muted">${esc(s.parent_name || '')}</span></td><td>${payInfo(s)} ${btns}${s.status !== 'removed' ? grant(s) : ''}</td></tr>`;
+    const paid = d.course.price > 0, nowS = Date.now() / 1000;
+    const payInfo = (s) => !paid ? '' : s.paid_until === -1 ? '<span class="tag g">♾️ Cheksiz ruxsat</span>' : s.paid_until > nowS ? `<span class="tag g">✅ ${A.fmtDT(s.paid_until).slice(0, 10)} gacha to‘langan</span>` : s.paid_until > 0 ? '<span class="tag r">⏰ Muddati tugagan</span>' : '<span class="tag r">💳 To‘lanmagan</span>';
+    const grant = (s) => !paid ? '' : `<br><button class="btn g sm" data-g="${s.child_id}:${d.course.access_days || 30}" style="margin-top:4px">💵 Naqd to‘lov: +${d.course.access_days || 30} kun</button> <button class="btn w sm" data-g="${s.child_id}:-1" style="margin-top:4px">♾️ Bepul (cheksiz)</button>`;
     const pend = by('pending'), act = by('active'), rem = by('removed');
     CV().innerHTML = `${pend.length ? `<div class="card"><h3>🙋 Qo‘shilish uchun arizalar (${pend.length})</h3><table>${pend.map((s) => row(s, `<button class="btn g sm" data-a="${s.child_id}:active">✅ Qabul qilish</button> <button class="btn w sm" data-a="${s.child_id}:removed">Rad etish</button>`)).join('')}</table></div>` : ''}
     <div class="card"><div class="row"><h3 style="margin:0">👥 Kurs o‘quvchilari (${act.length})</h3><input id="fp" placeholder="Telefon raqam: 90 123 45 67" inputmode="numeric"><button class="btn" id="ff" style="flex:none">➕ Qo‘lda qo‘shish</button></div><div id="fr"></div>
-    <table>${act.map((s) => row(s, `<button class="btn w sm" data-a="${s.child_id}:removed">Kursdan chiqarish</button>`)).join('')}</table>${act.length ? '' : '<p class="muted">Hali o‘quvchi yo‘q. O‘quvchilar saytdagi “Olimpiada” bo‘limidan ariza yuboradi, siz shu yerda qabul qilasiz.</p>'}</div>
+    <table>${act.map((s) => row(s, `<button class="btn w sm" data-a="${s.child_id}:removed">Kursdan chiqarish</button>`)).join('')}</table>${act.length ? '' : `<p class="muted">Hali o‘quvchi yo‘q. ${paid ? 'Pullik kursda o‘quvchi saytda to‘lov qilgach avtomatik shu yerda paydo bo‘ladi. Naqd to‘laganlarni “Qo‘lda qo‘shish” orqali qo‘shing.' : 'O‘quvchilar saytdagi “Olimpiada” bo‘limidan ariza yuboradi, siz shu yerda qabul qilasiz.'}</p>`}</div>
     ${rem.length ? `<div class="card"><h3>Chiqarilganlar</h3><table>${rem.map((s) => row(s, `<button class="btn w sm" data-a="${s.child_id}:active">Qayta qo‘shish</button>`)).join('')}</table></div>` : ''}`;
     CV().querySelectorAll('[data-a]').forEach((b) => (b.onclick = async () => { const [cid, st] = b.dataset.a.split(':'); await api('PUT', `/teach/courses/${d.course.id}/students/${cid}`, { status: st }); toast('Saqlandi ✅'); course(d.course.id); }));
+    CV().querySelectorAll('[data-g]').forEach((b) => (b.onclick = async () => { const [cid, days] = b.dataset.g.split(':').map(Number); await api('PUT', `/teach/courses/${d.course.id}/students/${cid}`, { status: 'active', grant_days: days }); toast(days === -1 ? 'Cheksiz ruxsat berildi ✅' : `+${days} kun qo‘shildi ✅`); course(d.course.id); }));
     $('#ff').onclick = async () => {
       const list = await api('GET', '/teach/find-children?phone=' + encodeURIComponent($('#fp').value));
-      $('#fr').innerHTML = list.length ? list.map((c) => `<div class="item"><b style="flex:1">${esc(c.name)} · ${c.grade}-sinf · ${esc(c.region)}</b><button class="btn g sm" data-add="${c.id}">Kursga qo‘shish</button></div>`).join('') : '<div class="err">Bu raqamda ro‘yxatdan o‘tgan o‘quvchi topilmadi. Avval saytda ro‘yxatdan o‘tib, o‘quvchi profilini qo‘shishi kerak.</div>';
-      $('#fr').querySelectorAll('[data-add]').forEach((b) => (b.onclick = async () => { await api('PUT', `/teach/courses/${d.course.id}/students/${b.dataset.add}`, { status: 'active' }); toast('Qo‘shildi ✅'); course(d.course.id); }));
+      $('#fr').innerHTML = list.length ? list.map((c) => `<div class="item"><b style="flex:1">${esc(c.name)} · ${c.grade}-sinf · ${esc(c.region)}</b><button class="btn g sm" data-add="${c.id}">Kursga qo‘shish${paid ? ` (+${d.course.access_days || 30} kun)` : ''}</button></div>`).join('') : '<div class="err">Bu raqamda ro‘yxatdan o‘tgan o‘quvchi topilmadi. Avval saytda ro‘yxatdan o‘tib, o‘quvchi profilini qo‘shishi kerak.</div>';
+      $('#fr').querySelectorAll('[data-add]').forEach((b) => (b.onclick = async () => { await api('PUT', `/teach/courses/${d.course.id}/students/${b.dataset.add}`, paid ? { status: 'active', grant_days: d.course.access_days || 30 } : { status: 'active' }); toast('Qo‘shildi ✅'); course(d.course.id); }));
     };
   }
 
@@ -136,6 +144,21 @@
     CV().querySelectorAll('[data-d]').forEach((b) => (b.onclick = async () => { await api('DELETE', '/teach/announcements/' + b.dataset.d); course(d.course.id); }));
   }
 
+  async function pay(d) {
+    CV().innerHTML = '<p class="muted">Yuklanmoqda...</p>';
+    const [list, cfg] = await Promise.all([api('GET', `/teach/courses/${d.course.id}/orders`), api('GET', '/teach/pay-config')]);
+    const paidList = list.filter((o) => o.status === 'paid');
+    const total = paidList.reduce((a, o) => a + o.amount, 0);
+    const month = paidList.filter((o) => o.paid_at > Date.now() / 1000 - 30 * DAY).reduce((a, o) => a + o.amount, 0);
+    CV().innerHTML = `<div class="card"><h3>💳 To‘lovlar</h3>
+      <p class="muted">Narx: <b>${priceLabel(d.course)}</b> · Payme: ${cfg.payme ? '<span class="tag g">ulangan</span>' : '<span class="tag r">ulanmagan</span>'} · Click: ${cfg.click ? '<span class="tag g">ulangan</span>' : '<span class="tag r">ulanmagan</span>'}</p>
+      ${!cfg.payme && !cfg.click ? '<div class="err">Onlayn to‘lov hali ulanmagan. Payme yoki Click bilan shartnoma tuzib, kalitlarni serverga kiritish kerak (README faylidagi “To‘lov tizimi” bo‘limi). Unga qadar to‘lovni naqd qabul qilib, “O‘quvchilar” bo‘limida muddat qo‘shasiz.</div>' : ''}
+      <div class="stats" style="margin:12px 0"><div class="stat" style="background:var(--green)"><b>${sum(month)}</b><span>So‘nggi 30 kun</span></div><div class="stat" style="background:var(--purple)"><b>${sum(total)}</b><span>Jami</span></div><div class="stat" style="background:var(--blue)"><b>${paidList.length}</b><span>To‘lovlar soni</span></div></div>
+      <div style="overflow:auto"><table><tr><th>Sana</th><th>O‘quvchi</th><th>Telefon</th><th>Summa</th><th>Usul</th><th>Holat</th></tr>
+      ${list.map((o) => `<tr><td>${A.fmtDT(o.paid_at)}</td><td><b>${esc(o.name)}</b></td><td>+${esc(o.phone)}</td><td>${sum(o.amount)}</td><td>${o.provider === 'payme' ? 'Payme' : 'Click'}</td><td>${o.status === 'paid' ? '<span class="tag g">To‘langan</span>' : '<span class="tag r">Qaytarilgan</span>'}</td></tr>`).join('')}</table></div>
+      ${list.length ? '' : '<p class="muted">Hali onlayn to‘lov yo‘q.</p>'}</div>`;
+  }
+
   function settings(d) { courseForm(d.course, CV()); }
 
   function olympiadForm(o) {
@@ -153,20 +176,23 @@
 
   async function courseForm(c, into, oid) {
     const olys = await api('GET', '/teach/olympiads');
-    c = c || { title: '', grade: 7, description: '', live_url: '', published: 1, open_join: 0, sort: 0, olympiad_id: oid || (olys[0] && olys[0].id) };
+    c = c || { title: '', grade: 7, grade_to: 7, price: 0, access_days: 30, description: '', live_url: '', published: 1, open_join: 0, sort: 0, olympiad_id: oid || (olys[0] && olys[0].id) };
     const html = `<div class="card"><h3>${c.id ? '⚙️ Kurs sozlamalari' : '➕ Yangi kurs'}</h3>
       <label class="f"><span>Olimpiada</span><select id="co2">${olys.map((o) => `<option value="${o.id}" ${c.olympiad_id === o.id ? 'selected' : ''}>${esc(o.icon)} ${esc(o.name)}</option>`).join('')}<option value="" ${c.olympiad_id ? '' : 'selected'}>— biriktirilmagan —</option></select></label>
-      <div class="row"><label class="f"><span>Kurs nomi</span><input id="ct" value="${esc(c.title)}" placeholder="Al-Xorazmiy olimpiadasi — 7-sinf"></label><label class="f" style="flex:none;width:110px"><span>Sinf</span><input id="cg" type="number" min="1" max="11" value="${c.grade}"></label><label class="f" style="flex:none;width:110px"><span>Tartib</span><input id="cs" type="number" value="${c.sort || 0}"></label></div>
+      <div class="row"><label class="f"><span>Kurs nomi</span><input id="ct" value="${esc(c.title)}" placeholder="Al-Xorazmiy olimpiadasi (7–8-sinflar)"></label><label class="f" style="flex:none;width:100px"><span>Sinfdan</span><input id="cg" type="number" min="1" max="11" value="${c.grade}"></label><label class="f" style="flex:none;width:100px"><span>Sinfgacha</span><input id="cg2" type="number" min="1" max="11" value="${c.grade_to || c.grade}"></label><label class="f" style="flex:none;width:110px"><span>Tartib</span><input id="cs" type="number" value="${c.sort || 0}"></label></div>
       <label class="f"><span>Tavsif</span><textarea id="cd">${esc(c.description)}</textarea></label>
+      <div class="row"><label class="f"><span>💳 Narx, so‘m (0 — bepul kurs)</span><input id="cpr" type="number" min="0" step="1000" value="${c.price || 0}"></label>
+        <label class="f"><span>Bitta to‘lov necha kunga</span><select id="cad">${[[30, '30 kun (oylik)'], [90, '90 kun (3 oy)'], [180, '180 kun (6 oy)'], [365, '1 yil'], [0, 'Butun kurs uchun (muddatsiz)']].map(([v, t]) => `<option value="${v}" ${(c.access_days ?? 30) === v ? 'selected' : ''}>${t}</option>`).join('')}</select></label></div>
+      <p class="muted" style="margin:-4px 0 8px;font-size:13px">Narx qo‘yilsa, o‘quvchi Payme yoki Click orqali to‘lov qiladi va kursga avtomatik qo‘shiladi. Muddat tugaganda darslar yopiladi va uzaytirish taklif qilinadi.</p>
       <label class="f"><span>Doimiy jonli dars havolasi (har bir darsda alohida ko‘rsatilmasa shu ishlatiladi)</span><div class="row"><input id="cl" value="${esc(c.live_url)}" placeholder="https://meet.jit.si/... yoki Zoom / Google Meet havolasi"><button class="btn o" id="cj" type="button" style="flex:none">🎥 Jitsi xona yaratish</button></div></label>
-      <label style="display:flex;gap:10px;align-items:center;font-weight:800;margin:8px 0"><input type="checkbox" id="co" style="width:22px;height:22px" ${c.open_join ? 'checked' : ''}> Ariza avtomatik qabul qilinsin (belgilanmasa, har bir o‘quvchini o‘zingiz tasdiqlaysiz)</label>
+      <label style="display:flex;gap:10px;align-items:center;font-weight:800;margin:8px 0"><input type="checkbox" id="co" style="width:22px;height:22px" ${c.open_join ? 'checked' : ''}> Bepul kursda ariza avtomatik qabul qilinsin (belgilanmasa, har bir o‘quvchini o‘zingiz tasdiqlaysiz)</label>
       <label style="display:flex;gap:10px;align-items:center;font-weight:800;margin:8px 0"><input type="checkbox" id="cp" style="width:22px;height:22px" ${c.published ? 'checked' : ''}> Saytda ko‘rinsin</label>
       <div id="ce"></div><div class="row"><button class="btn g" id="csv2" style="flex:none">💾 Saqlash</button>${c.id ? '<button class="btn r" id="cdel" style="flex:none">🗑️ Kursni o‘chirish</button>' : '<button class="btn w" id="cx" style="flex:none">Bekor</button>'}</div></div>`;
     if (into) into.innerHTML = html; else M.innerHTML = html;
     $('#cj').onclick = () => ($('#cl').value = A.newJitsi());
     if ($('#cx')) $('#cx').onclick = kurs;
     $('#csv2').onclick = async () => {
-      const b = { olympiad_id: +$('#co2').value || null, title: $('#ct').value, grade: +$('#cg').value, sort: +$('#cs').value, description: $('#cd').value, live_url: $('#cl').value.trim(), open_join: $('#co').checked, published: $('#cp').checked };
+      const b = { olympiad_id: +$('#co2').value || null, title: $('#ct').value, grade: +$('#cg').value, grade_to: +$('#cg2').value, price: +$('#cpr').value, access_days: +$('#cad').value, sort: +$('#cs').value, description: $('#cd').value, live_url: $('#cl').value.trim(), open_join: $('#co').checked, published: $('#cp').checked };
       try { if (c.id) { await api('PUT', '/teach/courses/' + c.id, b); toast('Saqlandi ✅'); course(c.id); } else { const j = await api('POST', '/teach/courses', b); course(j.id, 'lessons'); } }
       catch (e) { $('#ce').innerHTML = `<div class="err">${esc(e.message)}</div>`; }
     };

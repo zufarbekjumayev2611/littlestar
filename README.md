@@ -22,7 +22,7 @@ Har bir testning vaqtini admin paneldan o‘zgartirish mumkin.
 
 ## 🎓 Olimpiadaga tayyorlov bo‘limi
 Saytda **🎓 Olimpiada** sahifasi, admin panelda **🎓 Olimpiadaga tayyorlov** bo‘limi bor. Bo‘lim uch darajadan iborat: **olimpiada → sinf bo‘yicha kurs → darslar**.
-Birinchi ishga tushirishda **“Al-Xorazmiy olimpiadasi”** yaratiladi. Uning ichida ikkita kurs bo‘ladi: “Al-Xorazmiy olimpiadasi — 7-sinf” va “— 8-sinf”. Keyinchalik boshqa olimpiadani qo‘shish uchun admin panelda **“➕ Yangi olimpiada”** tugmasini bosing (nom, belgi, tavsif), so‘ng uning ichida **“➕ Kurs qo‘shish”** orqali sinflarni oching. O‘quvchilar avval olimpiadani, keyin o‘z sinfini tanlaydi.
+Birinchi ishga tushirishda **“Al-Xorazmiy olimpiadasi”** yaratiladi. Uning ichida bitta kurs bor: **“Al-Xorazmiy olimpiadasi (7–8-sinflar)”**, chunki olimpiada ikkala sinf uchun bitta. Kursda “Sinfdan–Sinfgacha” oralig‘i belgilanadi. Oldingi versiyada alohida bo‘lgan 7- va 8-sinf kurslari yangilashda avtomatik birlashtiriladi: darslar, o‘quvchilar va e’lonlar saqlanib qoladi. Keyinchalik boshqa olimpiadani qo‘shish uchun admin panelda **“➕ Yangi olimpiada”** tugmasini bosing (nom, belgi, tavsif), so‘ng uning ichida **“➕ Kurs qo‘shish”** orqali sinflarni oching. O‘quvchilar avval olimpiadani, keyin o‘z sinfini tanlaydi.
 
 **O‘qituvchi (admin panel → Olimpiadaga tayyorlov):**
 - **Darslar jadvali:** mavzu, sana-vaqt, davomiylik, konspekt. Matnda formulalar yozish mumkin: `$a^2+b^2=c^2$`.
@@ -35,11 +35,37 @@ Birinchi ishga tushirishda **“Al-Xorazmiy olimpiadasi”** yaratiladi. Uning i
 - **Jurnal:** davomat va har bir dars bo‘yicha ball. Excel (CSV) faylga yuklab olinadi.
 - **E’lonlar** va har bir dars ostida **savol-javob**.
 
+- **Narx va to‘lov:** kurs sozlamalarida narx (so‘m) va bitta to‘lov muddati (30 kun, 3 oy, 6 oy, 1 yil yoki butun kurs) belgilanadi. Narx 0 bo‘lsa, kurs bepul va arizalar orqali ishlaydi. “💳 To‘lovlar” bo‘limida tushumlar ko‘rinadi. Naqd to‘laganlarga “O‘quvchilar” bo‘limida “💵 Naqd to‘lov: +30 kun” tugmasi bilan muddat qo‘shiladi.
+
 **Rollar:** admin “Foydalanuvchilar” bo‘limida istalgan akkauntni **O‘qituvchi** qilib belgilashi mumkin. O‘qituvchi admin panelga kiradi va faqat “Olimpiada kurslari” bo‘limini ko‘radi.
 
 **O‘quvchi:** ota-ona akkauntiga 7- yoki 8-sinf o‘quvchi profili qo‘shiladi (endi 1–11-sinflar mavjud). Keyin “Olimpiada” sahifasida kursga ariza yuboriladi. Kurs ochilgach, o‘quvchi darslarni, jonli dars tugmasini, videolarni, vazifalarni, baholarni va yechimlarni ko‘radi. Har bir olimpiada, kurs va dars uchun havola mavjud (`/#olymp-o1`, `/#olymp-c3`, `/#olymp-l12`), uni Telegram’da ulashish mumkin.
 
 **Fayllar** `data/uploads/` papkasida saqlanadi (`DATA_DIR` o‘zgaruvchisi bilan o‘zgartirish mumkin). Havolalarda tasodifiy uzun kalit bor, uni bilmagan odam faylni ocha olmaydi. Zaxira skripti bu papkani ham nusxalaydi.
+
+## 💳 To‘lov tizimi (Payme va Click)
+Pullik kursda o‘quvchi “To‘lash” tugmasini bosadi va Payme yoki Click to‘lov sahifasiga o‘tadi. To‘lov muvaffaqiyatli bo‘lgach, server to‘lov tizimidan tasdiq oladi va o‘quvchini kursga **avtomatik** qo‘shadi, ya’ni muddatini uzaytiradi. Muddat tugaganda darslar yopiladi va “Uzaytirish” taklif qilinadi. Payme pulni qaytarsa, berilgan muddat ham bekor qilinadi.
+
+**1. Shartnoma.** Payme Business (business.payme.uz) va/yoki Click (merchant.click.uz) bilan yuridik shaxs yoki YaTT nomidan shartnoma tuziladi. Ular kassa (merchant) ochib, kalitlarni beradi.
+
+**2. Kabinetdagi sozlamalar:**
+| | Payme | Click |
+|---|---|---|
+| To‘lov hisobi maydoni | `order_id` | — |
+| Endpoint / URL | `https://littlestar.uz/api/pay/payme` | Prepare: `https://littlestar.uz/api/pay/click/prepare`<br>Complete: `https://littlestar.uz/api/pay/click/complete` |
+
+**3. Kalitlarni serverga kiritish** (`/etc/littlestar.env` fayli, keyin `sudo systemctl restart littlestar`):
+```
+PAYME_MERCHANT_ID=...        # Payme kassa ID
+PAYME_KEY=...                # Payme kaliti (avval test kaliti)
+PAYME_TEST=1                 # sinov paytida; haqiqiy to‘lovda bu qatorni o‘chiring
+CLICK_SERVICE_ID=...
+CLICK_MERCHANT_ID=...
+CLICK_SECRET_KEY=...
+```
+Fayl huquqi: `sudo chmod 600 /etc/littlestar.env`. Kalitlarni GitHub’ga **qo‘ymang**. Faqat kalitlari kiritilgan to‘lov usuli saytda ko‘rinadi. Kalit bo‘lmasa, o‘quvchiga “to‘lovni o‘quv markazida qiling” degan yozuv chiqadi.
+
+**4. Sinov.** Payme test muhitida (test.paycom.uz) kabinetdagi “Песочница” (sandbox) testlarini o‘tkazing, keyin `PAYME_TEST` qatorini olib tashlang. Server tomondagi barcha Payme metodlari (`CheckPerformTransaction`, `CreateTransaction`, `PerformTransaction`, `CancelTransaction`, `CheckTransaction`, `GetStatement`) hamda Click `prepare/complete` (MD5 imzo tekshiruvi bilan) amalga oshirilgan.
 
 ## Talablar
 - Ubuntu 22.04/24.04 VPS (1 GB RAM yetarli).
@@ -75,6 +101,8 @@ Lokal sinash: `npm start` buyrug‘idan keyin http://localhost:3000 va http://lo
 |---|---|
 | `PORT` | 3000 |
 | `DB_PATH` | `data/littlestar.db` |
+| `SITE_URL` | to‘lovdan keyin qaytish manzili uchun, masalan `https://littlestar.uz` |
+| `PAYME_*`, `CLICK_*` | to‘lov kalitlari (yuqoridagi “To‘lov tizimi” bo‘limi) |
 | `DATA_DIR` | `DB_PATH` joylashgan papka (yuklangan fayllar `uploads/` ichida) |
 
 Barcha ma’lumotlar bitta SQLite faylida saqlanadi. Zaxira nusxasini muntazam olish kerak.
@@ -100,5 +128,5 @@ Telefonlardagi ilova yangi versiyani darhol olishi uchun `public/sw.js` faylidag
 `POST /api/auth/register|login|logout` · `GET /api/meta` · `GET /api/me` · `POST|PUT|DELETE /api/children[/:id]` ·
 `GET /api/tests?section=&child=` · `POST /api/tests/:id/start {child}` · `POST /api/attempts/:id/submit {answers}` ·
 `GET /api/leaderboard?section=&grade=&region=` · Admin: `GET /api/admin/stats`, `PUT /api/admin/settings`, `GET|POST|PUT|DELETE /api/admin/tests[/:id]`, `PUT /api/admin/tests/:id/questions`, `GET|PUT /api/admin/users[/:id]`.
-Olimpiada: `POST /api/upload?name=` (fayl oqimi), `GET /files/:id/:key/:name` · O‘quvchi: `GET /api/academy/olympiads?child=`, `GET /api/academy/courses?child=&olympiad=`, `POST /api/academy/courses/:id/join`, `GET /api/academy/courses/:id?child=`, `GET /api/academy/lessons/:id?child=`, `POST /api/academy/lessons/:id/join|submit|comments` · O‘qituvchi: `/api/teach/olympiads[/:id]`, `/api/teach/courses[/:id]`, `/api/teach/courses/:id/lessons|students|announcements|journal`, `/api/teach/lessons/:id`, `/api/teach/submissions[/:id]`.
+Olimpiada: `POST /api/upload?name=` (fayl oqimi), `GET /files/:id/:key/:name` · O‘quvchi: `GET /api/academy/olympiads?child=`, `GET /api/academy/courses?child=&olympiad=`, `POST /api/academy/courses/:id/join`, `GET /api/academy/courses/:id?child=`, `GET /api/academy/lessons/:id?child=`, `POST /api/academy/lessons/:id/join|submit|comments`, `POST /api/academy/courses/:id/pay {child,provider}`, `GET /api/academy/orders/:id` · To‘lov tizimlari: `POST /api/pay/payme`, `POST /api/pay/click/prepare|complete` · O‘qituvchi: `/api/teach/olympiads[/:id]`, `/api/teach/courses[/:id]`, `/api/teach/courses/:id/lessons|students|announcements|journal`, `/api/teach/lessons/:id`, `/api/teach/submissions[/:id]`.
 Avtorizatsiya: `Authorization: Bearer <token>`.

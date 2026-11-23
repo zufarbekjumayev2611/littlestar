@@ -26,9 +26,54 @@ window.OLYMP = function (X) {
 
   const state = { olympiad: null, course: null, lesson: null };
   // To‘g‘ridan-to‘g‘ri havola: #olymp-o1 (olimpiada), #olymp-c3 (kurs) yoki #olymp-l12 (dars) — Telegram’da ulashish va sahifa yangilanganda joyida qolish uchun
-  let deep = /^#olymp-([ocl])(\d+)$/.exec(location.hash);
+  let deep = /^#olymp-([oclp])(\d+)$/.exec(location.hash); // p — to‘lovdan qaytish (buyurtma raqami)
   const setHash = (h) => { try { history.replaceState(null, '', '#olymp' + h); } catch (e) {} };
   const nowS = () => Date.now() / 1000;
+  const sum = (n) => String(n || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' so‘m';
+  const period = (c) => (c.access_days > 0 ? (c.access_days === 30 ? 'oyiga' : `${c.access_days} kunga`) : 'butun kurs uchun');
+
+  // To‘lov oynasi: Payme yoki Click tanlanadi, so‘ng to‘lov sahifasiga o‘tiladi
+  async function payModal(c, renew) {
+    const ch = X.child();
+    let opt = {}; try { opt = await X.api('GET', '/academy/pay-options'); } catch (e) {}
+    const any = opt.payme || opt.click;
+    const m = X.modal(`<h3>💳 ${renew ? 'Obunani uzaytirish' : 'Kursga to‘lov'}</h3><p style="font-weight:900;font-size:18px;margin:6px 0">${esc(c.title)}</p>
+      <div class="big-score" style="font-size:40px;margin:10px 0">${sum(c.price)}</div><p class="muted" style="margin-top:0">${period(c)} · 👦 ${esc(ch.name)}</p>
+      ${any ? `<p class="muted">To‘lov usulini tanlang. To‘lovdan so‘ng kurs avtomatik ochiladi.</p><div class="btns" style="flex-direction:column">
+        ${opt.payme ? '<button class="btn" data-p="payme" style="background:#33cccc;box-shadow:0 4px 0 #1f9999;font-size:19px;padding:14px">Payme orqali to‘lash</button>' : ''}
+        ${opt.click ? '<button class="btn" data-p="click" style="background:#0073ff;box-shadow:0 4px 0 #0052b8;font-size:19px;padding:14px">Click orqali to‘lash</button>' : ''}</div>`
+      : `<div class="err">Onlayn to‘lov tez orada ulanadi. Hozircha to‘lovni o‘quv markazida amalga oshiring. To‘lovdan so‘ng o‘qituvchi kursni ochib beradi.</div>`}
+      <div id="pe"></div><div class="btns"><button class="btn w" id="n">Yopish</button></div>`);
+    m.querySelector('#n').onclick = () => m.remove();
+    m.querySelectorAll('[data-p]').forEach((b) => (b.onclick = async () => {
+      m.querySelectorAll('[data-p]').forEach((x) => (x.disabled = true));
+      try { const r = await X.api('POST', `/academy/courses/${c.id}/pay`, { child: ch.id, provider: b.dataset.p }); location.href = r.url; }
+      catch (e) { m.querySelector('#pe').innerHTML = `<div class="err">${esc(e.message)}</div>`; m.querySelectorAll('[data-p]').forEach((x) => (x.disabled = false)); }
+    }));
+  }
+
+  // To‘lov tizimidan qaytgach: to‘lov tasdiqlanishini kutish
+  async function payReturn(orderId) {
+    setHash('-p' + orderId);
+    let tries = 0;
+    const check = async () => {
+      let o; try { o = await X.api('GET', '/academy/orders/' + orderId); } catch (e) { app.innerHTML = X.errBox(e); return; }
+      if (o.status === 'paid') {
+        window.LS && window.LS.sWin && window.LS.sWin(); window.LS && window.LS.confetti && window.LS.confetti(160);
+        app.innerHTML = `<div class="card" style="text-align:center"><div class="big-score">✅</div><h2>To‘lov qabul qilindi!</h2><p class="muted">${esc(o.title)} — kurs ochildi. Omad! 🍀</p><button class="go" id="gc">▶️ Kursga kirish</button></div>`;
+        $('#gc').onclick = () => course(o.course_id); return;
+      }
+      if (o.status !== 'new' || tries > 20) {
+        app.innerHTML = `<div class="card" style="text-align:center"><div class="big-score">${o.status === 'new' ? '⏳' : '❌'}</div><h2>${o.status === 'new' ? 'To‘lov hali tasdiqlanmadi' : 'To‘lov amalga oshmadi'}</h2>
+          <p class="muted">${o.status === 'new' ? 'Agar pul yechilgan bo‘lsa, bir necha daqiqadan keyin sahifani yangilang yoki o‘quv markaziga murojaat qiling.' : 'To‘lov bekor qilindi. Qaytadan urinib ko‘rishingiz mumkin.'}</p>
+          <div class="btns"><button class="btn w" id="rf">🔄 Yangilash</button><button class="btn" id="gb">← Kurslarga</button></div></div>`;
+        $('#rf').onclick = () => { tries = 0; check(); }; $('#gb').onclick = () => { state.lesson = state.course = null; view(); }; return;
+      }
+      if (tries === 0) app.innerHTML = `<div class="card" style="text-align:center"><div class="big-score">⏳</div><h2>To‘lov tekshirilmoqda...</h2><p class="muted">${esc(o.title)}</p></div>`;
+      tries++; setTimeout(check, 3000);
+    };
+    X.loading(); check();
+  }
   const ST = { submitted: ['tag', '🕓 Tekshirilmoqda'], checked: ['tag g', '✅ Tekshirildi'], returned: ['tag', '↩️ Qayta ishlang'] };
   const subTag = (s, max) => (!s ? '' : s.status === 'checked' ? `<span class="tag g">✅ ${s.score}/${max} ball</span>` : `<span class="${ST[s.status][0]}">${ST[s.status][1]}</span>`);
 
@@ -53,7 +98,7 @@ window.OLYMP = function (X) {
     const ME = X.me();
     const hero = `<div class="ol-hero"><h2>🎓 Olimpiadaga tayyorlov</h2><p style="margin:0;font-weight:800">Jonli onlayn darslar, video yechimlar, uyga vazifalar — ularni o‘qituvchi tekshiradi. Olimpiadani tanlang 👇</p></div>`;
     if (!ME) { app.innerHTML = hero + `<div class="card"><p class="muted" style="margin-top:0">Kursga yozilish uchun akkauntga kiring yoki ro‘yxatdan o‘ting.</p><button class="go" id="lg">👤 Kirish / Ro‘yxatdan o‘tish</button></div>`; $('#lg').onclick = () => X.go('profile', true); return; }
-    if (deep) { const [, k, n] = deep; deep = null; return k === 'l' ? lesson(+n) : k === 'c' ? course(+n) : olympiad(+n); }
+    if (deep) { const [, k, n] = deep; deep = null; return k === 'l' ? lesson(+n) : k === 'c' ? course(+n) : k === 'p' ? payReturn(+n) : olympiad(+n); }
     if (!ME.children.length) { app.innerHTML = hero + `<div class="card"><p class="muted" style="margin-top:0">Avval o‘quvchi profilini qo‘shing (ism-familiya, sinf, viloyat).</p><button class="go" id="ak">➕ O‘quvchi qo‘shish</button></div>`; $('#ak').onclick = () => X.childForm(null, view); return; }
     let olys; try { olys = await X.api('GET', '/academy/olympiads?child=' + X.child().id); } catch (e) { app.innerHTML = X.errBox(e); return; }
     const gr = (g) => (g.length ? (g.length > 1 ? `${g[0]}–${g[g.length - 1]}` : g[0]) + '-sinflar uchun' : 'Kurslar tez orada');
@@ -77,10 +122,11 @@ window.OLYMP = function (X) {
       <div class="ol-hero"><h2>${esc(o.icon)} ${esc(o.name)}</h2><p style="margin:0;font-weight:800">${esc(o.description)}</p></div>
       <div class="card"><h3>Kim o‘qiydi?</h3>${X.kidsBar()}</div>
       <div class="sgrid">${list.map((c, i) => `<button class="scard" data-c="${c.id}" style="background:${bg[i % bg.length]}">
-        ${c.status === 'active' ? '<span class="lock">✅ Siz kursdasiz</span>' : c.status === 'pending' ? '<span class="lock">⏳ Ariza yuborilgan</span>' : ''}
-        <span class="ic">${c.grade >= 7 ? '🧮' : '⭐'}</span><b>${esc(c.title)}</b><small>${esc(c.description)}</small>
-        <small>📅 ${c.lessons} ta dars${c.next ? ` · keyingisi: ${A.fmtDay(c.next.starts_at)}` : ''}</small>
-        <small style="margin-top:10px;font-weight:900;font-size:16px">${c.status === 'active' ? '▶️ Kursga kirish' : c.status === 'pending' ? 'O‘qituvchi tasdiqlashini kuting' : c.status === 'removed' ? 'O‘qituvchiga murojaat qiling' : '➕ Kursga yozilish'}</small></button>`).join('') || '<div class="card"><p class="muted">Bu olimpiada uchun kurslar tez orada ochiladi.</p></div>'}</div>`;
+        ${c.status === 'active' ? '<span class="lock">✅ Siz kursdasiz</span>' : c.status === 'pending' ? '<span class="lock">⏳ Ariza yuborilgan</span>' : c.status === 'expired' ? '<span class="lock">⏰ Muddat tugagan</span>' : ''}
+        <span class="ic">🧮</span><b>${esc(c.title)}</b><small>${esc(c.description)}</small>
+        <small>🎓 ${esc(c.grade_label)} · 📅 ${c.lessons} ta dars${c.next ? ` · keyingisi: ${A.fmtDay(c.next.starts_at)}` : ''}</small>
+        ${c.price > 0 ? `<small style="font-size:17px;font-weight:900;margin-top:8px">💳 ${sum(c.price)} <span style="opacity:.85">/ ${period(c)}</span>${c.status === 'active' && c.paid_until > 0 ? `<br><span style="font-size:14px">✅ ${A.fmtDT(c.paid_until).slice(0, 10)} gacha to‘langan</span>` : ''}</small>` : ''}
+        <small style="margin-top:10px;font-weight:900;font-size:16px">${c.status === 'active' ? '▶️ Kursga kirish' : c.status === 'pending' ? 'O‘qituvchi tasdiqlashini kuting' : c.status === 'removed' ? 'O‘qituvchiga murojaat qiling' : c.status === 'expired' ? '🔄 To‘lab, uzaytirish' : c.price > 0 ? '💳 To‘lash va kursga qo‘shilish' : '➕ Kursga yozilish'}</small></button>`).join('') || '<div class="card"><p class="muted">Bu olimpiada uchun kurslar tez orada ochiladi.</p></div>'}</div>`;
     $('#bk').onclick = () => { state.olympiad = null; view(); };
     X.bindKids(() => olympiad(oid));
     app.querySelectorAll('[data-c]').forEach((b) => (b.onclick = async () => {
@@ -88,6 +134,7 @@ window.OLYMP = function (X) {
       if (c.status === 'active') { state.course = c.id; return course(c.id); }
       if (c.status === 'pending') return info('⏳ Ariza yuborilgan', 'O‘qituvchi arizangizni tasdiqlagach, kurs ochiladi. Odatda bu to‘lov yoki ro‘yxatga olishdan keyin bo‘ladi.');
       if (c.status === 'removed') return info('Kurs yopiq', 'Bu kursga qayta qo‘shilish uchun o‘quv markazi bilan bog‘laning.');
+      if (c.price > 0) return payModal(c, c.status === 'expired');
       const ch = X.child();
       const m = X.modal(`<h3>${esc(c.title)}</h3><p class="muted">👦 ${esc(ch.name)} (${ch.grade}-sinf) uchun kursga yozilish arizasi yuborilsinmi?</p><div class="btns"><button class="btn w" id="n">Bekor</button><button class="btn g" id="y">📨 Ariza yuborish</button></div>`);
       m.querySelector('#n').onclick = () => m.remove();
@@ -100,20 +147,31 @@ window.OLYMP = function (X) {
   async function course(id) {
     state.course = id; state.lesson = null; setHash('-c' + id); X.loading();
     let d; try { d = await X.api('GET', `/academy/courses/${id}?child=${X.child().id}`); } catch (e) { app.innerHTML = X.errBox(e); return; }
+    if (d.status === 'unpaid' || d.status === 'expired') {
+      state.olympiad = d.course.olympiad_id || null;
+      app.innerHTML = `<div class="bar-top"><button class="back" id="bk">← Orqaga</button><div class="ttl">🎓 ${esc(d.course.title)}</div></div>
+        <div class="card" style="text-align:center"><div class="big-score">${d.status === 'expired' ? '⏰' : '💳'}</div><h2>${d.status === 'expired' ? 'Obuna muddati tugadi' : 'Bu kurs pullik'}</h2>
+        <p class="muted">${d.status === 'expired' ? 'Darslarni davom ettirish uchun obunani uzaytiring. Barcha natijalaringiz saqlanib qolgan.' : 'To‘lovdan so‘ng darslar, videolar va vazifalar ochiladi.'}</p>
+        <div class="big-score" style="font-size:36px">${sum(d.course.price)}</div><p class="muted">${period(d.course)}</p><button class="go" id="pay">💳 To‘lash</button></div>`;
+      $('#bk').onclick = () => { state.course = null; view(); };
+      $('#pay').onclick = () => payModal(d.course, d.status === 'expired'); return;
+    }
     if (d.status !== 'active') { state.course = null; return view(); }
     state.olympiad = d.course.olympiad_id || null;
+    const left = d.course.price > 0 && d.course.paid_until > 0 ? Math.ceil((d.course.paid_until - nowS()) / 86400) : null;
     const t = nowS();
     const live = d.lessons.find((l) => A.liveState(l, t) === 'live');
     const next = d.lessons.find((l) => A.liveState(l, t) === 'soon');
     const todo = d.lessons.filter((l) => l.has_hw && (!l.sub || l.sub.status === 'returned') && (!l.hw_due || l.hw_due > t - 7 * 86400));
     app.innerHTML = `<div class="bar-top"><button class="back" id="bk">← ${esc(d.course.olympiad || 'Olimpiadalar')}</button><div class="ttl">🎓 ${esc(d.course.title)}</div></div>
       ${live ? `<div class="ol-live"><span class="ol-dot"></span><b>Dars hozir: ${esc(live.title)}</b><button class="ol-join" data-l="${live.id}">Darsga o‘tish →</button></div>` : next ? `<div class="card" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div style="flex:1"><h3 style="margin:0">⏰ Keyingi dars</h3><p class="muted" style="margin:4px 0 0">${esc(next.title)} — <b>${A.fmtDay(next.starts_at)}</b></p></div><button class="btn" data-l="${next.id}">Ochish</button></div>` : ''}
-      <div class="card"><div class="kids">${X.kidsBar()}</div></div>
+      <div class="card"><div class="kids">${X.kidsBar()}</div>${left != null ? `<div class="${left <= 5 ? 'err' : 'ok'}" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="flex:1">💳 Obuna: ${A.fmtDT(d.course.paid_until).slice(0, 10)} gacha (${left} kun qoldi)</span>${left <= 5 ? '<button class="btn g" id="renew">🔄 Uzaytirish</button>' : ''}</div>` : ''}</div>
       ${d.announcements.length ? `<div class="card"><h3>📢 E’lonlar</h3>${d.announcements.slice(0, 3).map((a) => `<div class="ol-ann"><div class="muted" style="font-size:13px">${A.fmtDT(a.created_at)}</div>${A.rich(a.text)}</div>`).join('')}</div>` : ''}
       ${todo.length ? `<div class="card"><h3>📝 Bajarilishi kerak</h3><div class="tlist">${todo.map((l) => `<div class="trow" data-l="${l.id}" style="cursor:pointer"><div class="nm">${esc(l.title)}<div class="meta">${l.hw_due ? (l.hw_due < t ? '⚠️ Muddati o‘tgan: ' : '⏳ Muddat: ') + A.fmtDT(l.hw_due) : 'Muddatsiz'}</div></div>${subTag(l.sub, l.hw_max) || '<span class="tag">Topshirilmagan</span>'}</div>`).join('')}</div></div>` : ''}
       <div class="card"><h3>📅 Darslar</h3><div class="tlist">${d.lessons.map((l, i) => `<div class="trow" data-l="${l.id}" style="cursor:pointer"><div class="nm">${i + 1}. ${esc(l.title)}<div class="meta">🗓️ ${A.fmtDay(l.starts_at)}${l.videos ? ` · 🎬 ${l.videos} ta video` : ''}</div></div>
         ${A.liveState(l, t) === 'live' ? '<span class="tag" style="background:#ff3d6e;color:#fff">🔴 Jonli</span>' : ''}${l.has_hw ? subTag(l.sub, l.hw_max) || '<span class="tag">📝 Vazifa bor</span>' : ''}<button class="btn w">Ochish →</button></div>`).join('') || '<p class="muted">Darslar jadvali tez orada qo‘shiladi.</p>'}</div></div>`;
     $('#bk').onclick = () => { state.course = null; view(); };
+    if ($('#renew')) $('#renew').onclick = () => payModal(d.course, true);
     X.bindKids(() => course(id));
     app.querySelectorAll('[data-l]').forEach((b) => (b.onclick = () => lesson(+b.dataset.l)));
     A.math(app);
