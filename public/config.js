@@ -1,4 +1,4 @@
 // Little Star — sayt sozlamasi.
-// Backend (API) manzili. Backend alohida domenda bo‘lsa, shu yerga yozing (oxirida "/" siz).
-// Sayt va API bitta domenda bo‘lsa (masalan, Nginx /api ni backendga yo‘naltirsa) — bo‘sh qoldiring: "".
-window.LS_API = "https://api.littlestar.uz";
+// Backend (API) manzili. Sayt Render'da backend bilan BITTA xizmatda ishlasa — bo'sh qoldiring (server bu faylni o'zi beradi).
+// Sayt alohida joyda (Netlify, Vercel...) bo'lsa — API manzilini yozing, masalan: "https://littlestar.onrender.com"
+window.LS_API = "";
