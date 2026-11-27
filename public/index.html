@@ -831,7 +831,7 @@ async function viewProfile(){
   const a=ME.account;const meta=await loadMeta().catch(()=>({free_mode:true}));
   const prem=a.premium_until*1000>Date.now();
   app.innerHTML=`<div class="card"><h2>👤 Kabinet</h2>
-    <p class="muted">📱 ${phoneFmt(a.phone)}${a.parent_name?' · '+esc(a.parent_name):''}</p>
+    <p class="muted">${a.email&&!/^\d/.test(a.phone||"")?"✉️ "+esc(a.email):"📱 "+phoneFmt(a.phone)}${a.parent_name?' · '+esc(a.parent_name):''}</p>
     <div style="margin:10px 0">${meta.free_mode?'<span class="tag g">🎁 Hozircha barcha bo‘limlar bepul</span>':prem?`<span class="tag g">⭐ Obuna faol: ${new Date(a.premium_until*1000).toLocaleDateString('uz')} gacha</span>`:'<span class="tag">Bepul tarif</span>'}</div>
     <div class="btns" style="justify-content:flex-start">${a.role==='admin'?'<a class="btn" href="/admin.html" style="text-decoration:none">🛠️ Admin panel</a>':a.role==='teacher'?'<a class="btn" href="/admin.html" style="text-decoration:none">👩‍🏫 O‘qituvchi paneli</a>':''}<button class="btn w" id="lo">Chiqish</button></div></div>
    <div class="card"><h3>🧒 Farzandlar</h3>
