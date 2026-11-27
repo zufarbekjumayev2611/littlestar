@@ -314,7 +314,7 @@
       <select id="pw" style="width:auto"><option value="3">Ingichka</option><option value="6" selected>O‘rta</option><option value="12">Qalin</option></select>
       <button class="btn w sm" id="pu">↶ Bekor qilish</button><span style="flex:1"></span><button class="btn w" id="pc">Yopish</button><button class="btn g" id="ps">💾 Izohga biriktirish</button></div><div class="wrap"><canvas></canvas></div>`;
     document.body.appendChild(ov);
-    const cv = ov.querySelector('canvas'), cx = cv.getContext('2d'); const img = new Image(); let color = '#e53935'; const hist = [];
+    const cv = ov.querySelector('canvas'), cx = cv.getContext('2d'); const img = new Image(); img.crossOrigin = 'anonymous'; let color = '#e53935'; const hist = [];
     img.onload = () => { const k = Math.min(1, 2000 / Math.max(img.width, img.height)); cv.width = img.width * k; cv.height = img.height * k; cx.drawImage(img, 0, 0, cv.width, cv.height); };
     img.src = url;
     let drawing = false;

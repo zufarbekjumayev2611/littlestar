@@ -725,6 +725,7 @@ document.getElementById('inst').onclick=async()=>{if(!deferredPrompt)return;defe
 window.LS={home,stopAll,confetti,sWin,sGood,sBad};
 }
 </script>
+<script src="/config.js"></script>
 <script src="/acad-lib.js"></script>
 <script src="/olymp.js"></script>
 <script>
@@ -742,7 +743,7 @@ let activeChild=st.get('ls_child',null);
 
 async function api(method,path,body){
   let r;
-  try{r=await fetch('/api'+path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined})}
+  try{r=await fetch((window.LS_API||'')+'/api'+path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined})}
   catch(e){throw new Error('Server bilan aloqa yo‘q. Internetni tekshiring.')}
   let j={};try{j=await r.json()}catch(e){}
   if(r.status===401&&token&&!path.startsWith('/auth')){token=null;st.del('ls_token');ME=null}
@@ -787,7 +788,7 @@ function authCard(msg){
     <h2>👤 Kabinet</h2>${msg?`<p class="muted">${msg}</p>`:''}
     <div class="tabs2"><button data-m="login" class="${mode==='login'?'on':''}">Kirish</button><button data-m="reg" class="${mode==='reg'?'on':''}">Ro‘yxatdan o‘tish</button></div>
     <form id="af">
-      <label class="field"><span>Ota-ona telefon raqami</span><div class="phone"><b>+998</b><input id="ph" inputmode="numeric" maxlength="12" placeholder="90 123 45 67" autocomplete="tel"></div></label>
+      <label class="field"><span>Ota-ona telefon raqami</span><div class="phone"><b>+998</b><input id="ph" type="tel" inputmode="tel" maxlength="24" placeholder="90 123 45 67" autocomplete="tel"></div></label>
       <label class="field"><span>Parol${mode==='reg'?' (kamida 6 belgi)':''}</span><input id="pw" type="password" autocomplete="${mode==='reg'?'new-password':'current-password'}"></label>
       ${mode==='reg'?'<label class="field"><span>Ota-onaning ismi (ixtiyoriy)</span><input id="pn" maxlength="60"></label>':''}
       <div id="ae"></div>
@@ -832,7 +833,7 @@ async function viewProfile(){
   app.innerHTML=`<div class="card"><h2>👤 Kabinet</h2>
     <p class="muted">📱 ${phoneFmt(a.phone)}${a.parent_name?' · '+esc(a.parent_name):''}</p>
     <div style="margin:10px 0">${meta.free_mode?'<span class="tag g">🎁 Hozircha barcha bo‘limlar bepul</span>':prem?`<span class="tag g">⭐ Obuna faol: ${new Date(a.premium_until*1000).toLocaleDateString('uz')} gacha</span>`:'<span class="tag">Bepul tarif</span>'}</div>
-    <div class="btns" style="justify-content:flex-start">${a.role==='admin'?'<a class="btn" href="/admin" style="text-decoration:none">🛠️ Admin panel</a>':a.role==='teacher'?'<a class="btn" href="/admin" style="text-decoration:none">👩‍🏫 O‘qituvchi paneli</a>':''}<button class="btn w" id="lo">Chiqish</button></div></div>
+    <div class="btns" style="justify-content:flex-start">${a.role==='admin'?'<a class="btn" href="/admin.html" style="text-decoration:none">🛠️ Admin panel</a>':a.role==='teacher'?'<a class="btn" href="/admin.html" style="text-decoration:none">👩‍🏫 O‘qituvchi paneli</a>':''}<button class="btn w" id="lo">Chiqish</button></div></div>
    <div class="card"><h3>🧒 Farzandlar</h3>
     ${ME.children.length?ME.children.map(c=>`<div class="trow"><div class="nm">${esc(c.name)} <span class="tag">${c.grade}-sinf</span><div class="meta">${esc(c.region)}${c.district?', '+esc(c.district):''}${c.school?' · '+esc(c.school):''}</div></div><button class="btn w" data-e="${c.id}">✏️</button><button class="btn r" data-d="${c.id}">🗑️</button></div>`).join(''):'<p class="muted">Hali bola qo‘shilmagan. Testlar va reyting bola nomidan yuritiladi.</p>'}
     <button class="go" id="addc" style="margin-top:12px">➕ Bola qo‘shish</button></div>`;
