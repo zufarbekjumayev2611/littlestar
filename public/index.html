@@ -13,8 +13,11 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/png" href="/icons/favicon-48.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<script src="/config.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap"></noscript>
 <style>
 :root{--pink:#ff5c8a;--blue:#3d8bff;--green:#1fbf75;--orange:#ff9f1c;--purple:#8e5cff;--yellow:#ffd23f;--ink:#23204a;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -725,7 +728,6 @@ document.getElementById('inst').onclick=async()=>{if(!deferredPrompt)return;defe
 window.LS={home,stopAll,confetti,sWin,sGood,sBad};
 }
 </script>
-<script src="/config.js"></script>
 <script src="/acad-lib.js"></script>
 <script src="/olymp.js"></script>
 <script>
