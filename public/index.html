@@ -747,7 +747,7 @@ async function api(method,path,body){
   catch(e){throw new Error('Server bilan aloqa yo‘q. Internetni tekshiring.')}
   let j={};try{j=await r.json()}catch(e){}
   if(r.status===401&&token&&!path.startsWith('/auth')){token=null;st.del('ls_token');ME=null}
-  if(!r.ok){const e=new Error(j.error||('Xatolik: '+r.status));e.status=r.status;throw e}
+  if(!r.ok){const e=new Error(j.error||((r.status===404||r.status===405)?'Sayt serverga (API) ulanmagan: '+((window.LS_API||location.origin)+'/api')+' manzilida API topilmadi ('+r.status+'). config.js dagi LS_API ni yoki domen sozlamasini tekshiring.':('Xatolik: '+r.status)));e.status=r.status;throw e}
   return j;
 }
 async function loadMeta(){if(!META)META=await api('GET','/meta');return META}

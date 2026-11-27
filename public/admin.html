@@ -64,7 +64,7 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 let token=null;try{token=JSON.parse(localStorage.getItem('ls_token'))}catch(e){}
 let STATS=null;
 async function api(method,path,body){let r;try{r=await fetch((window.LS_API||'')+'/api'+path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined})}catch(e){throw new Error('Server bilan aloqa yo‘q')}
-  let j={};try{j=await r.json()}catch(e){}if(!r.ok){const e=new Error(j.error||r.status);e.status=r.status;throw e}return j}
+  let j={};try{j=await r.json()}catch(e){}if(!r.ok){const e=new Error(j.error||((r.status===404||r.status===405)?'Sayt serverga (API) ulanmagan: '+((window.LS_API||location.origin)+'/api')+' manzilida API topilmadi ('+r.status+'). config.js dagi LS_API ni yoki domen sozlamasini tekshiring.':('Xatolik: '+r.status)));e.status=r.status;throw e}return j}
 function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2200)}
 function modal(html){const m=document.createElement('div');m.className='modal';m.innerHTML=`<div class="card">${html}</div>`;document.body.appendChild(m);return m}
 const SECN={pm1:'PM — 1-bosqich',pm2:'PM — 2-bosqich',ixt:'Ixtisoslashtirilgan maktablar',ol3:'Olimpiada — 3-sinf',ol4:'Olimpiada — 4-sinf'};
