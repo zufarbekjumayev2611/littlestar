@@ -30,7 +30,7 @@ window.AC = (function () {
   function upload(file, token, onProg) {
     return new Promise((res, rej) => {
       const x = new XMLHttpRequest();
-      x.open("POST", "/api/upload?name=" + encodeURIComponent(file.name || "fayl"));
+      x.open("POST", (window.LS_API || "") + "/api/upload?name=" + encodeURIComponent(file.name || "fayl"));
       x.setRequestHeader("Authorization", "Bearer " + token);
       x.setRequestHeader("Content-Type", file.type || "application/octet-stream");
       x.upload.onprogress = (e) => { if (e.lengthComputable && onProg) onProg(e.loaded / e.total); };
