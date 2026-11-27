@@ -8,6 +8,9 @@ User=littlestar
 WorkingDirectory=/opt/littlestar
 Environment=PORT=3000
 Environment=DB_PATH=/opt/littlestar/data/littlestar.db
+Environment=SITE_URL=https://littlestar.uz
+# To‘lov kalitlari alohida faylda saqlanadi (README → “To‘lov tizimi”): sudo nano /etc/littlestar.env ; sudo chmod 600 /etc/littlestar.env
+EnvironmentFile=-/etc/littlestar.env
 ExecStart=/usr/bin/node --no-warnings server/server.js
 Restart=always
 RestartSec=3

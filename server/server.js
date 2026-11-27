@@ -12,6 +12,7 @@ const ROOT = path.resolve(__dirname, "..");
 const PUBLIC = path.join(ROOT, "public");
 const PORT = +(process.env.PORT || 3000);
 const DB_PATH = process.env.DB_PATH || path.join(ROOT, "data", "littlestar.db");
+const DATA_DIR = process.env.DATA_DIR || path.dirname(DB_PATH);
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 
 /* ======================= MA'LUMOTLAR BAZASI ======================= */
@@ -185,7 +186,7 @@ route("GET", "/api/me", ({ account }) => {
 // --- Bolalar profillari ---
 function childInput(b) {
   const name = str(b.name, 50); if (name.length < 2) bad("Bolaning ism-familiyasini yozing");
-  const grade = +b.grade; if (![1, 2, 3, 4].includes(grade)) bad("Sinfni tanlang");
+  const grade = +b.grade; if (!(Number.isInteger(grade) && grade >= 1 && grade <= 11)) bad("Sinfni tanlang");
   const region = str(b.region, 60); if (!REGIONS.includes(region)) bad("Viloyatni tanlang");
   return { name, grade, region, district: str(b.district, 60), school: str(b.school, 80) };
 }
@@ -352,10 +353,13 @@ route("GET", "/api/admin/users", ({ query }) => {
 route("PUT", "/api/admin/users/:id", ({ body, params, account }) => {
   const id = +params.id; const u = db.prepare("SELECT * FROM accounts WHERE id=?").get(id); if (!u) throw new HttpError(404, "Topilmadi");
   if ("premium_days" in body) { const d = +body.premium_days; const base = Math.max(now(), u.premium_until || 0); db.prepare("UPDATE accounts SET premium_until=? WHERE id=?").run(d > 0 ? base + d * 86400 : 0, id); }
-  if ("role" in body && ["user", "admin"].includes(body.role)) { if (id === account.id && body.role !== "admin") bad("O‘zingizni adminlikdan chiqara olmaysiz"); db.prepare("UPDATE accounts SET role=? WHERE id=?").run(body.role, id); }
+  if ("role" in body && ["user", "teacher", "admin"].includes(body.role)) { if (id === account.id && body.role !== "admin") bad("O‘zingizni adminlikdan chiqara olmaysiz"); db.prepare("UPDATE accounts SET role=? WHERE id=?").run(body.role, id); }
   if (body.new_password) { const p = String(body.new_password); if (p.length < 6) bad("Parol kamida 6 belgi"); const salt = crypto.randomBytes(16).toString("hex"); db.prepare("UPDATE accounts SET pass_hash=?,salt=? WHERE id=?").run(hashPass(p, salt), salt, id); db.prepare("DELETE FROM sessions WHERE account_id=?").run(id); }
   return { ok: true };
 }, A);
+
+/* ======================= OLIMPIADA AKADEMIYASI ======================= */
+const ACADEMY = require("./academy.js")({ db, route, HttpError, bad, str, now, DATA_DIR });
 
 /* ======================= HTTP SERVER ======================= */
 const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".json": "application/json", ".webmanifest": "application/manifest+json", ".png": "image/png", ".svg": "image/svg+xml", ".ico": "image/x-icon", ".txt": "text/plain; charset=utf-8" };
@@ -390,6 +394,7 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://x");
   if (!url.pathname.startsWith("/api/")) {
     if (req.method !== "GET" && req.method !== "HEAD") { res.writeHead(405); return res.end(); }
+    if (url.pathname.startsWith("/files/")) return ACADEMY.serveFile(req, res, url.pathname);
     return serveStatic(req, res, url.pathname);
   }
   try {
@@ -401,7 +406,8 @@ const server = http.createServer(async (req, res) => {
     if (token) account = db.prepare("SELECT a.* FROM sessions s JOIN accounts a ON a.id=s.account_id WHERE s.token=?").get(token) || null;
     if (r.auth && !account) throw new HttpError(401, "Iltimos, akkauntga kiring");
     if (r.admin && account.role !== "admin") throw new HttpError(403, "Faqat admin uchun");
-    const body = ["POST", "PUT"].includes(req.method) ? await readBody(req) : {};
+    if (r.teacher && !ACADEMY.isTeacher(account)) throw new HttpError(403, "Faqat o‘qituvchi uchun");
+    const body = r.raw ? {} : ["POST", "PUT"].includes(req.method) ? await readBody(req) : {};
     const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket.remoteAddress;
     const out = await r.handler({ req, body, params, query: Object.fromEntries(url.searchParams), account, token, ip });
     send(res, 200, out);
@@ -422,5 +428,6 @@ if (args[0] === "--create-admin") {
   else db.prepare("INSERT INTO accounts(phone,pass_hash,salt,parent_name,role,created_at) VALUES(?,?,?,?,?,?)").run(phone, hashPass(pass, salt), salt, "Admin", "admin", now());
   console.log("Admin tayyor:", phone); process.exit(0);
 } else {
+  server.requestTimeout = 4 * 3600 * 1000; // katta video yuklash uchun
   server.listen(PORT, () => console.log(`Little Star server: http://localhost:${PORT}  (admin panel: /admin)`));
 }

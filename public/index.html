@@ -248,7 +248,7 @@ table.lb small{display:block;color:#7a74a8;font-weight:700}
 <body>
 <header class="top">
   <div class="logo" id="home-link"><span class="st">⭐</span><div><b>Little Star</b><small>Navoiy-Qorako‘l o‘quv markazi</small></div></div>
-  <nav class="nav"><a data-r="games" href="#games"><i>🎮</i>O‘yinlar</a><a data-r="tests" href="#tests"><i>📝</i>Testlar</a><a data-r="rating" href="#rating"><i>🏆</i>Reyting</a><a data-r="profile" href="#profile"><i>👤</i>Kabinet</a></nav>
+  <nav class="nav"><a data-r="games" href="#games"><i>🎮</i>O‘yinlar</a><a data-r="tests" href="#tests"><i>📝</i>Testlar</a><a data-r="olymp" href="#olymp"><i>🎓</i>Olimpiada</a><a data-r="rating" href="#rating"><i>🏆</i>Reyting</a><a data-r="profile" href="#profile"><i>👤</i>Kabinet</a></nav>
   <div class="sp"></div>
   <div class="pill" id="mystars">⭐ 0</div>
   <button class="ibtn" id="inst" title="Ilovani o‘rnatish" style="display:none;width:auto;padding:0 12px;font-size:15px;font-weight:900">📲 O‘rnatish</button>
@@ -725,6 +725,8 @@ document.getElementById('inst').onclick=async()=>{if(!deferredPrompt)return;defe
 window.LS={home,stopAll,confetti,sWin,sGood,sBad};
 }
 </script>
+<script src="/acad-lib.js"></script>
+<script src="/olymp.js"></script>
 <script>
 "use strict";
 /* ============ KABINET: akkaunt, testlar, reyting ============ */
@@ -804,7 +806,7 @@ async function childForm(c,onDone){
   const m=modal(`<h3>${c?'Bola ma’lumotlarini tahrirlash':'Bola qo‘shish'}</h3>
     <form id="cf2" style="text-align:left">
       <label class="field"><span>Ism-familiya</span><input id="cn" maxlength="50" value="${esc(c?c.name:'')}"></label>
-      <label class="field"><span>Sinf</span><select id="cg">${[1,2,3,4].map(g=>`<option value="${g}" ${c&&c.grade===g?'selected':(!c&&g===4?'selected':'')}>${g}-sinf</option>`).join('')}</select></label>
+      <label class="field"><span>Sinf</span><select id="cg">${[1,2,3,4,5,6,7,8,9,10,11].map(g=>`<option value="${g}" ${c&&c.grade===g?'selected':(!c&&g===4?'selected':'')}>${g}-sinf</option>`).join('')}</select></label>
       <label class="field"><span>Viloyat</span><select id="cr"><option value="">— tanlang —</option>${meta.regions.map(r=>`<option ${c&&c.region===r?'selected':''}>${esc(r)}</option>`).join('')}</select></label>
       <label class="field"><span>Tuman / shahar</span><input id="cd" maxlength="60" value="${esc(c?c.district:'')}"></label>
       <label class="field"><span>Maktab yoki o‘quv markazi (ixtiyoriy)</span><input id="cs" maxlength="80" value="${esc(c?c.school:'')}"></label>
@@ -830,7 +832,7 @@ async function viewProfile(){
   app.innerHTML=`<div class="card"><h2>👤 Kabinet</h2>
     <p class="muted">📱 ${phoneFmt(a.phone)}${a.parent_name?' · '+esc(a.parent_name):''}</p>
     <div style="margin:10px 0">${meta.free_mode?'<span class="tag g">🎁 Hozircha barcha bo‘limlar bepul</span>':prem?`<span class="tag g">⭐ Obuna faol: ${new Date(a.premium_until*1000).toLocaleDateString('uz')} gacha</span>`:'<span class="tag">Bepul tarif</span>'}</div>
-    <div class="btns" style="justify-content:flex-start">${a.role==='admin'?'<a class="btn" href="/admin" style="text-decoration:none">🛠️ Admin panel</a>':''}<button class="btn w" id="lo">Chiqish</button></div></div>
+    <div class="btns" style="justify-content:flex-start">${a.role==='admin'?'<a class="btn" href="/admin" style="text-decoration:none">🛠️ Admin panel</a>':a.role==='teacher'?'<a class="btn" href="/admin" style="text-decoration:none">👩‍🏫 O‘qituvchi paneli</a>':''}<button class="btn w" id="lo">Chiqish</button></div></div>
    <div class="card"><h3>🧒 Farzandlar</h3>
     ${ME.children.length?ME.children.map(c=>`<div class="trow"><div class="nm">${esc(c.name)} <span class="tag">${c.grade}-sinf</span><div class="meta">${esc(c.region)}${c.district?', '+esc(c.district):''}${c.school?' · '+esc(c.school):''}</div></div><button class="btn w" data-e="${c.id}">✏️</button><button class="btn r" data-d="${c.id}">🗑️</button></div>`).join(''):'<p class="muted">Hali bola qo‘shilmagan. Testlar va reyting bola nomidan yuritiladi.</p>'}
     <button class="go" id="addc" style="margin-top:12px">➕ Bola qo‘shish</button></div>`;
@@ -944,8 +946,12 @@ async function viewRating(){
   $('#rr').onchange=e=>{S.region=e.target.value;viewRating()};
 }
 
+/* ---------- OLIMPIADA bo‘limi (olymp.js) ---------- */
+if(window.OLYMP)Object.assign(ROUTES,window.OLYMP({app,api,loadMe,me:()=>ME,child,kidsBar,bindKids,childForm,go,loading,errBox,modal,token:()=>token}));
+else ROUTES.olymp=()=>{app.innerHTML=errBox('Olimpiada bo‘limi yuklanmadi. Sahifani yangilang.')};
+
 /* ---------- START ---------- */
-const startR=location.hash.slice(1);
+const startR=location.hash.slice(1).replace(/-.*$/,'');
 go(ROUTES[startR]?startR:'games',true);
 })();
 </script>
