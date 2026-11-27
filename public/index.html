@@ -787,7 +787,7 @@ function authCard(msg){
     <h2>👤 Kabinet</h2>${msg?`<p class="muted">${msg}</p>`:''}
     <div class="tabs2"><button data-m="login" class="${mode==='login'?'on':''}">Kirish</button><button data-m="reg" class="${mode==='reg'?'on':''}">Ro‘yxatdan o‘tish</button></div>
     <form id="af">
-      <label class="field"><span>Ota-ona telefon raqami</span><div class="phone"><b>+998</b><input id="ph" inputmode="numeric" maxlength="12" placeholder="90 123 45 67" autocomplete="tel"></div></label>
+      <label class="field"><span>Ota-ona telefon raqami</span><div class="phone"><b>+998</b><input id="ph" type="tel" inputmode="tel" maxlength="24" placeholder="90 123 45 67" autocomplete="tel"></div></label>
       <label class="field"><span>Parol${mode==='reg'?' (kamida 6 belgi)':''}</span><input id="pw" type="password" autocomplete="${mode==='reg'?'new-password':'current-password'}"></label>
       ${mode==='reg'?'<label class="field"><span>Ota-onaning ismi (ixtiyoriy)</span><input id="pn" maxlength="60"></label>':''}
       <div id="ae"></div>
