@@ -73,7 +73,7 @@ const dt=t=>t?new Date(t*1000).toLocaleDateString('uz'):'—';
 /* ---------- kirish ---------- */
 function login(msg){$('#tabs').innerHTML='';
   M.innerHTML=`<div class="card" style="max-width:420px;margin:40px auto"><h2>🔐 Admin kirishi</h2>${msg?`<div class="err">${esc(msg)}</div>`:''}
-  <form id="lf"><label class="f"><span>Email yoki telefon</span><input id="ph" type="text" autocomplete="username" autocapitalize="off" placeholder="admin@gmail.com yoki 90 123 45 67"></label><label class="f"><span>Parol</span><input id="pw" type="password"></label><div id="le"></div><button class="btn" style="width:100%;padding:12px">Kirish</button></form></div>`;
+  <form id="lf"><label class="f"><span>Telefon raqam</span><input id="ph" type="tel" inputmode="tel" autocomplete="username" placeholder="90 123 45 67"></label><label class="f"><span>Parol</span><input id="pw" type="password"></label><div id="le"></div><button class="btn" style="width:100%;padding:12px">Kirish</button></form></div>`;
   $('#lf').onsubmit=async e=>{e.preventDefault();try{const j=await api('POST','/auth/login',{phone:$('#ph').value,password:$('#pw').value});if(!['admin','teacher'].includes(j.account.role))throw new Error('Bu akkaunt admin yoki o‘qituvchi emas');token=j.token;localStorage.setItem('ls_token',JSON.stringify(token));start()}catch(err){$('#le').innerHTML=`<div class="err">${esc(err.message)}</div>`}}}
 async function start(){if(!token)return login();
   let role;try{const me=await api('GET','/me');role=me.account.role;if(!['admin','teacher'].includes(role))return login('Bu akkaunt admin yoki o‘qituvchi emas')}catch(e){return login(e.status===401?'':e.message)}
